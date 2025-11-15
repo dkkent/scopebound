@@ -41,10 +41,10 @@ export const auth = betterAuth({
   },
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days
-    updateAge: 60 * 60 * 24, // 1 day
+    updateAge: 60 * 60 * 24, // 1 day - refresh session daily
     cookieCache: {
       enabled: true,
-      maxAge: 60 * 60 * 24 * 7, // 7 days - match session expiration
+      maxAge: 5 * 60, // 5 minutes cache - balances performance and freshness
     },
   },
   secret: process.env.SESSION_SECRET || process.env.BETTER_AUTH_SECRET || "development-secret-change-in-production",
@@ -55,6 +55,14 @@ export const auth = betterAuth({
     generateId: () => randomUUID(),
     crossSubDomainCookies: {
       enabled: true,
+    },
+    // Explicit cookie attributes for persistence
+    defaultCookieAttributes: {
+      maxAge: 60 * 60 * 24 * 7, // 7 days - CRITICAL for persistent cookies
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax", // Allow cross-page navigation
+      path: "/",
+      // httpOnly managed by BetterAuth per cookie type (session vs cache)
     },
   },
   plugins: [

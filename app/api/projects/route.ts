@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
       .insert(projects)
       .values({
         ...validatedData,
-        hourlyRate: hourlyRate.toString(),
+        hourlyRate, // Pass string value to Drizzle numeric column (preserves precision)
         createdBy: session.user.id,
         status: "draft",
       })

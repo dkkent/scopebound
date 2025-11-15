@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { projects, organizationMembers } from "@/lib/schema";
-import { insertProjectSchema } from "@/lib/schema";
+import { updateProjectSchema } from "@/lib/schema";
 import { eq, and } from "drizzle-orm";
 import { z } from "zod";
 
@@ -108,15 +108,11 @@ export async function PATCH(
 
     const body = await request.json();
     
-    // Strip server-managed fields from request body
-    const { createdBy, organizationId, id: _id, createdAt, updatedAt, ...updateData } = body;
+    // Strip server-managed fields from request body (in case client sends them)
+    const { organizationId, id: _id, createdAt, updatedAt, ...updateData } = body;
     
-    // Create partial schema for updates (all fields optional)
-    const updateSchema = insertProjectSchema
-      .omit({ organizationId: true, createdBy: true })
-      .partial();
-    
-    const validatedData = updateSchema.parse(updateData);
+    // Use dedicated update schema (more lenient regex to accept Drizzle numeric formats)
+    const validatedData = updateProjectSchema.parse(updateData);
 
     // Update project
     const updatedProject = await db

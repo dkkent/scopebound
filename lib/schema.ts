@@ -276,10 +276,28 @@ export const insertProjectSchema = createInsertSchema(projects, {
   name: z.string().min(1),
   clientName: z.string().min(1),
   projectBrief: z.string().min(10),
-  hourlyRate: z.string().or(z.number()),
+  // Numeric field: keep as string for precision, validate decimal format (strict for new entries)
+  hourlyRate: z.string().regex(/^\d+(\.\d{1,2})?$/, "Must be a valid dollar amount"),
 }).omit({
   id: true,
   createdBy: true, // Populated from session on server
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Update schema - more lenient to accept values as returned by Drizzle numeric columns
+export const updateProjectSchema = createInsertSchema(projects, {
+  name: z.string().min(1).optional(),
+  clientName: z.string().min(1).optional(),
+  projectBrief: z.string().min(10).optional(),
+  // More lenient regex - accepts any valid decimal number (Drizzle numeric returns varying precision)
+  hourlyRate: z.string().regex(/^\d+(\.\d+)?$/, "Must be a valid number").optional(),
+  projectType: z.enum(["saas", "mobile", "web", "ecommerce", "custom"]).optional(),
+  status: z.enum(["draft", "form_sent", "scoping", "approved", "in_progress", "completed"]).optional(),
+}).omit({
+  id: true,
+  organizationId: true,
+  createdBy: true,
   createdAt: true,
   updatedAt: true,
 });
@@ -297,9 +315,10 @@ export const insertProjectFormSchema = createInsertSchema(projectForms, {
 
 export const insertProjectTimelineSchema = createInsertSchema(projectTimelines, {
   timelineData: z.any(),
-  totalWeeks: z.string().or(z.number()),
-  totalHours: z.string().or(z.number()),
-  totalCost: z.string().or(z.number()),
+  // Numeric fields: keep as strings for precision, validate decimal format
+  totalWeeks: z.string().regex(/^\d+(\.\d{1,2})?$/, "Must be a valid number"),
+  totalHours: z.string().regex(/^\d+(\.\d{1,2})?$/, "Must be a valid number"),
+  totalCost: z.string().regex(/^\d+(\.\d{1,2})?$/, "Must be a valid dollar amount"),
 }).omit({
   id: true,
   shareToken: true,
@@ -308,7 +327,8 @@ export const insertProjectTimelineSchema = createInsertSchema(projectTimelines, 
 });
 
 export const insertOrganizationSettingsSchema = createInsertSchema(organizationSettings, {
-  defaultHourlyRate: z.string().or(z.number()).optional(),
+  // Numeric field: keep as string for precision, validate decimal format
+  defaultHourlyRate: z.string().regex(/^\d+(\.\d{1,2})?$/, "Must be a valid dollar amount").optional(),
   brandColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
   logoUrl: z.string().url().optional().or(z.literal("")),
   customPrompts: z.any().optional(),
@@ -328,6 +348,7 @@ export type Session = typeof sessions.$inferSelect;
 export type Account = typeof accounts.$inferSelect;
 export type Project = typeof projects.$inferSelect;
 export type InsertProject = z.infer<typeof insertProjectSchema>;
+export type UpdateProject = z.infer<typeof updateProjectSchema>;
 export type ProjectForm = typeof projectForms.$inferSelect;
 export type InsertProjectForm = z.infer<typeof insertProjectFormSchema>;
 export type ProjectTimeline = typeof projectTimelines.$inferSelect;

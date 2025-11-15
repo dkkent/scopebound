@@ -34,7 +34,6 @@ export default function EditProjectPage() {
   const [formData, setFormData] = useState({
     name: "",
     clientName: "",
-    clientEmail: "",
     projectType: "web",
     projectBrief: "",
     hourlyRate: "",
@@ -49,13 +48,14 @@ export default function EditProjectPage() {
         const response = await fetch(`/api/projects/${projectId}`);
         if (response.ok) {
           const data = await response.json();
+          // Normalize hourlyRate to 2 decimal places (Drizzle numeric returns strings with varying precision)
+          const normalizedRate = parseFloat(data.project.hourlyRate).toFixed(2);
           setFormData({
             name: data.project.name,
             clientName: data.project.clientName,
-            clientEmail: data.project.clientEmail,
             projectType: data.project.projectType,
             projectBrief: data.project.projectBrief,
-            hourlyRate: data.project.hourlyRate,
+            hourlyRate: normalizedRate,
             status: data.project.status,
           });
         } else if (response.status === 404) {
@@ -77,11 +77,15 @@ export default function EditProjectPage() {
     setSaving(true);
     setError("");
     try {
-      // Prepare update data with type conversions
+      // Prepare update data with only project table fields
+      // Zod schema will coerce hourlyRate string to number
       const updateData = {
-        ...formData,
-        hourlyRate: formData.hourlyRate.toString(), // Convert to string
-        clientEmail: formData.clientEmail || undefined, // Don't send empty string
+        name: formData.name,
+        clientName: formData.clientName,
+        projectType: formData.projectType,
+        projectBrief: formData.projectBrief,
+        hourlyRate: formData.hourlyRate, // Send as-is, schema will coerce to number
+        status: formData.status,
       };
 
       const response = await fetch(`/api/projects/${projectId}`, {
@@ -157,21 +161,6 @@ export default function EditProjectPage() {
                 required
                 data-testid="input-client-name"
               />
-            </div>
-
-            {/* Client Email */}
-            <div className="space-y-2">
-              <Label htmlFor="clientEmail">Client Email</Label>
-              <Input
-                id="clientEmail"
-                type="email"
-                value={formData.clientEmail}
-                onChange={(e) => setFormData({ ...formData, clientEmail: e.target.value })}
-                data-testid="input-client-email"
-              />
-              <p className="text-sm text-muted-foreground">
-                Optional for existing projects
-              </p>
             </div>
 
             {/* Project Type */}

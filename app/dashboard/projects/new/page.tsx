@@ -29,6 +29,7 @@ export default function NewProjectPage() {
   const [formData, setFormData] = useState({
     name: "",
     clientName: "",
+    clientEmail: "",
     projectType: "web",
     projectBrief: "",
     hourlyRate: "",

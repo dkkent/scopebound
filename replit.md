@@ -10,6 +10,62 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (November 15, 2025)
 
+### Session Persistence & Password UX - COMPLETED (Latest)
+1. **Session Cookie Persistence Fix**: Configured BetterAuth cookie settings for 7-day persistent sessions
+   - Added `maxAge: 60 * 60 * 24 * 7` to `defaultCookieAttributes` (critical for cross-session persistence)
+   - Users no longer need to log in every browser session
+   - Cookie settings: `secure` for production HTTPS, `sameSite: "lax"` for navigation, `path: "/"`
+   - BetterAuth manages `httpOnly` per cookie type automatically
+   
+2. **Password Visibility Toggle**: Created PasswordInput component with Eye/EyeOff icons
+   - Toggle between showing/hiding password text
+   - Fully keyboard accessible (in natural tab order)
+   - Screen-reader friendly with dynamic aria-labels ("Show password" / "Hide password")
+   - Used in both login and signup forms
+   - Reuses Input component styling for consistency
+
+### Project Management System - COMPLETED
+**Complete project CRUD interface with organization access control**
+
+1. **Session Cookies Fix**: Added BetterAuth `nextCookies()` plugin for proper Next.js cookie handling
+   - 7-day session expiration with daily refresh
+   - Cookie caching enabled for performance
+   - Cross-subdomain cookie support for Replit deployments
+
+2. **Project Edit Bug Fix**: Removed `clientEmail` field from edit form (belongs in project_forms table, not projects table)
+
+3. **Numeric Field Handling - Dual Schema Approach**:
+   - **Problem**: Drizzle's `numeric` columns return varying decimal precision (e.g., "150.000000") but form validation required strict 2-decimal format
+   - **Solution**: Separate schemas for insert vs update operations
+     - `insertProjectSchema`: Strict validation `/^\d+(\.\d{1,2})?$/` for new user-entered data
+     - `updateProjectSchema`: Lenient validation `/^\d+(\.\d+)?$/` accepts any Drizzle numeric format
+   - **Implementation**: 
+     - POST /api/projects uses `insertProjectSchema` (strict user input validation)
+     - PATCH /api/projects/[id] uses `updateProjectSchema` (accepts DB output formats)
+     - Edit form normalizes with `.toFixed(2)` as defense-in-depth
+   - **Fields**: Applied to `hourlyRate`, `totalWeeks`, `totalHours`, `totalCost`, `defaultHourlyRate`
+
+4. **API Routes**: Complete REST API with organization-based access control
+   - POST /api/projects - Create project (validates membership)
+   - GET /api/projects - List projects (filtered by organization membership)
+   - GET /api/projects/[id] - Get single project (verifies access)
+   - PATCH /api/projects/[id] - Update project (verifies access, uses lenient schema)
+   - DELETE /api/projects/[id] - Delete project (verifies access)
+
+5. **Dashboard Features**:
+   - Project list with status filtering (all, draft, in-progress, completed)
+   - Empty states for new users and filtered views
+   - Project cards with status badges, client info, and action buttons
+   - Responsive grid layout (1-3 columns based on screen size)
+
+6. **Forms & Validation**:
+   - React Hook Form with Zod validation
+   - All fields have proper data-testid attributes for e2e testing
+   - Error handling with toast notifications
+   - Loading states during mutations
+
+## Recent Changes (November 15, 2025)
+
 ### Shadcn/UI Component Library - COMPLETED
 1. **Component System**: Implemented complete shadcn/ui component library with 10+ components:
    - Form components: Input, Label, Select, Textarea, Form

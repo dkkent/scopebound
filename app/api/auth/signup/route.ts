@@ -18,17 +18,27 @@ export async function POST(request: NextRequest) {
     const { email, password, name, organizationName } = signupSchema.parse(body);
 
     // Create user with BetterAuth
-    const userResponse = await auth.api.signUpEmail({
-      body: {
-        email,
-        password,
-        name,
-      },
-    });
+    let userResponse;
+    try {
+      userResponse = await auth.api.signUpEmail({
+        body: {
+          email,
+          password,
+          name,
+        },
+      });
+    } catch (authError) {
+      console.error("BetterAuth signup error:", authError);
+      console.error("Error stack:", authError instanceof Error ? authError.stack : "No stack");
+      return NextResponse.json(
+        { error: "Failed to create user", details: String(authError) },
+        { status: 500 }
+      );
+    }
 
     if (!userResponse || !userResponse.user) {
       return NextResponse.json(
-        { error: "Failed to create user" },
+        { error: "Failed to create user - no user returned" },
         { status: 500 }
       );
     }
@@ -51,11 +61,21 @@ export async function POST(request: NextRequest) {
       role: "owner",
     });
 
-    return NextResponse.json({
+    // Create response with BetterAuth headers (including Set-Cookie)
+    const response = NextResponse.json({
       success: true,
       user: userResponse.user,
       session: userResponse.session,
     });
+
+    // Copy all headers from BetterAuth response to preserve Set-Cookie
+    if (userResponse.headers) {
+      userResponse.headers.forEach((value, key) => {
+        response.headers.set(key, value);
+      });
+    }
+
+    return response;
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

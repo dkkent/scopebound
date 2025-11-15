@@ -12,25 +12,35 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { email, password } = loginSchema.parse(body);
 
-    const response = await auth.api.signInEmail({
+    const authResponse = await auth.api.signInEmail({
       body: {
         email,
         password,
       },
     });
 
-    if (!response || !response.user) {
+    if (!authResponse || !authResponse.user) {
       return NextResponse.json(
         { error: "Invalid credentials" },
         { status: 401 }
       );
     }
 
-    return NextResponse.json({
+    // Create response with BetterAuth headers (including Set-Cookie)
+    const response = NextResponse.json({
       success: true,
-      user: response.user,
-      session: response.session,
+      user: authResponse.user,
+      session: authResponse.session,
     });
+
+    // Copy all headers from BetterAuth response to preserve Set-Cookie
+    if (authResponse.headers) {
+      authResponse.headers.forEach((value, key) => {
+        response.headers.set(key, value);
+      });
+    }
+
+    return response;
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

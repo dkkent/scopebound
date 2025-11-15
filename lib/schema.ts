@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, varchar, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, varchar, pgEnum, boolean } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -10,23 +10,24 @@ export const roleEnum = pgEnum("role", ["owner", "member"]);
 export const users = pgTable("users", {
   id: text("id").primaryKey(),
   email: text("email").notNull().unique(),
-  emailVerified: timestamp("email_verified", { mode: "date" }),
+  emailVerified: boolean("email_verified").notNull().default(false),
   name: text("name").notNull(),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { mode: "string" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "string" }).notNull().defaultNow(),
 });
 
 // Sessions table (for BetterAuth)
 export const sessions = pgTable("session", {
   id: text("id").primaryKey(),
-  expiresAt: timestamp("expires_at", { mode: "date" }).notNull(),
+  expiresAt: timestamp("expires_at", { mode: "string" }).notNull(),
+  token: text("token").notNull().unique(),
   ipAddress: text("ip_address"),
   userAgent: text("user_agent"),
   userId: text("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { mode: "string" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "string" }).notNull().defaultNow(),
 });
 
 // Accounts table (for BetterAuth password storage)
@@ -40,10 +41,10 @@ export const accounts = pgTable("account", {
   accessToken: text("access_token"),
   refreshToken: text("refresh_token"),
   idToken: text("id_token"),
-  expiresAt: timestamp("expires_at", { mode: "date" }),
+  expiresAt: timestamp("expires_at", { mode: "string" }),
   password: text("password"),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { mode: "string" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "string" }).notNull().defaultNow(),
 });
 
 // Verification tokens table (for BetterAuth)
@@ -51,9 +52,9 @@ export const verifications = pgTable("verification", {
   id: text("id").primaryKey(),
   identifier: text("identifier").notNull(),
   value: text("value").notNull(),
-  expiresAt: timestamp("expires_at", { mode: "date" }).notNull(),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+  expiresAt: timestamp("expires_at", { mode: "string" }).notNull(),
+  createdAt: timestamp("created_at", { mode: "string" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "string" }).notNull().defaultNow(),
 });
 
 // Organizations table
@@ -63,7 +64,7 @@ export const organizations = pgTable("organizations", {
   ownerId: text("owner_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { mode: "string" }).notNull().defaultNow(),
 });
 
 // Organization members table
@@ -76,7 +77,7 @@ export const organizationMembers = pgTable("organization_members", {
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   role: roleEnum("role").notNull().default("member"),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { mode: "string" }).notNull().defaultNow(),
 });
 
 // Relations

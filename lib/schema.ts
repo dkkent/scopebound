@@ -279,6 +279,7 @@ export const insertProjectSchema = createInsertSchema(projects, {
   hourlyRate: z.string().or(z.number()),
 }).omit({
   id: true,
+  createdBy: true, // Populated from session on server
   createdAt: true,
   updatedAt: true,
 });

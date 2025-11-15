@@ -1,10 +1,3 @@
 {
-  "/page": "app/page.js",
-  "/login/page": "app/login/page.js",
-  "/api/projects/[id]/update-timeline/route": "app/api/projects/[id]/update-timeline/route.js",
-  "/api/projects/[id]/route": "app/api/projects/[id]/route.js",
-  "/api/projects/[id]/approve-timeline/route": "app/api/projects/[id]/approve-timeline/route.js",
-  "/timeline/[shareToken]/page": "app/timeline/[shareToken]/page.js",
-  "/dashboard/page": "app/dashboard/page.js",
-  "/dashboard/projects/[id]/page": "app/dashboard/projects/[id]/page.js"
+  "/page": "app/page.js"
 }

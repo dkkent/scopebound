@@ -170,6 +170,43 @@ export const organizationSettings = pgTable("organization_settings", {
   organizationIdx: index("org_settings_org_idx").on(table.organizationId),
 }));
 
+// Custom project types table
+export const customProjectTypes = pgTable("custom_project_types", {
+  id: text("id").primaryKey().$defaultFn(() => nanoid()),
+  organizationId: text("organization_id")
+    .notNull()
+    .references(() => organizations.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  description: text("description"),
+  defaultHourlyRate: numeric("default_hourly_rate", { precision: 10, scale: 2 }),
+  aiPromptTemplate: text("ai_prompt_template"),
+  createdAt: timestamp("created_at", { mode: "string" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "string" }).notNull().defaultNow(),
+}, (table) => ({
+  organizationIdx: index("custom_project_types_org_idx").on(table.organizationId),
+}));
+
+// Organization invites table
+export const organizationInvites = pgTable("organization_invites", {
+  id: text("id").primaryKey().$defaultFn(() => nanoid()),
+  organizationId: text("organization_id")
+    .notNull()
+    .references(() => organizations.id, { onDelete: "cascade" }),
+  email: text("email").notNull(),
+  role: roleEnum("role").notNull().default("member"),
+  inviteToken: text("invite_token").notNull().unique().$defaultFn(() => nanoid(32)),
+  invitedBy: text("invited_by")
+    .notNull()
+    .references(() => users.id),
+  expiresAt: timestamp("expires_at", { mode: "string" }).notNull(),
+  acceptedAt: timestamp("accepted_at", { mode: "string" }),
+  createdAt: timestamp("created_at", { mode: "string" }).notNull().defaultNow(),
+}, (table) => ({
+  organizationIdx: index("org_invites_org_idx").on(table.organizationId),
+  inviteTokenIdx: index("org_invites_token_idx").on(table.inviteToken),
+  emailIdx: index("org_invites_email_idx").on(table.email),
+}));
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   organizationMembers: many(organizationMembers),
@@ -190,6 +227,8 @@ export const organizationsRelations = relations(organizations, ({ one, many }) =
     fields: [organizations.id],
     references: [organizationSettings.organizationId],
   }),
+  customProjectTypes: many(customProjectTypes),
+  invites: many(organizationInvites),
 }));
 
 export const organizationMembersRelations = relations(
@@ -254,6 +293,24 @@ export const organizationSettingsRelations = relations(organizationSettings, ({ 
   organization: one(organizations, {
     fields: [organizationSettings.organizationId],
     references: [organizations.id],
+  }),
+}));
+
+export const customProjectTypesRelations = relations(customProjectTypes, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [customProjectTypes.organizationId],
+    references: [organizations.id],
+  }),
+}));
+
+export const organizationInvitesRelations = relations(organizationInvites, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [organizationInvites.organizationId],
+    references: [organizations.id],
+  }),
+  invitedByUser: one(users, {
+    fields: [organizationInvites.invitedBy],
+    references: [users.id],
   }),
 }));
 
@@ -338,6 +395,29 @@ export const insertOrganizationSettingsSchema = createInsertSchema(organizationS
   updatedAt: true,
 });
 
+export const insertCustomProjectTypeSchema = createInsertSchema(customProjectTypes, {
+  name: z.string().min(1),
+  description: z.string().optional(),
+  defaultHourlyRate: z.string().regex(/^\d+(\.\d{1,2})?$/, "Must be a valid dollar amount").optional(),
+  aiPromptTemplate: z.string().optional(),
+}).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertOrganizationInviteSchema = createInsertSchema(organizationInvites, {
+  email: z.string().email(),
+  role: z.enum(["owner", "member"]).optional(),
+}).omit({
+  id: true,
+  inviteToken: true,
+  invitedBy: true,
+  expiresAt: true,
+  acceptedAt: true,
+  createdAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -355,3 +435,7 @@ export type ProjectTimeline = typeof projectTimelines.$inferSelect;
 export type InsertProjectTimeline = z.infer<typeof insertProjectTimelineSchema>;
 export type OrganizationSettings = typeof organizationSettings.$inferSelect;
 export type InsertOrganizationSettings = z.infer<typeof insertOrganizationSettingsSchema>;
+export type CustomProjectType = typeof customProjectTypes.$inferSelect;
+export type InsertCustomProjectType = z.infer<typeof insertCustomProjectTypeSchema>;
+export type OrganizationInvite = typeof organizationInvites.$inferSelect;
+export type InsertOrganizationInvite = z.infer<typeof insertOrganizationInviteSchema>;

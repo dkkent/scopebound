@@ -40,7 +40,7 @@ Preferred communication style: Simple, everyday language.
 - **Database**: PostgreSQL via Neon Serverless, utilizing `drizzle-orm` for schema management.
 - **Schema Design**:
     - **Authentication & User Management**: `users`, `session`, `account`, `verification`.
-    - **Multi-tenancy**: `organizations`, `organization_members`, `organization_settings`.
+    - **Multi-tenancy**: `organizations`, `organization_members`, `organization_settings`, `custom_project_types`, `organization_invites`.
     - **Project Management**: `projects` (core project records), `project_forms` (dynamic client intake forms in JSONB), `project_timelines` (AI-generated timelines in JSONB).
 - **Key Features**: All timestamp columns use `{ mode: "string" }` for BetterAuth compatibility. Project IDs use `nanoid`. JSONB columns store flexible data structures. Share tokens enable public access to forms and timelines. Enums enforce valid project types and status transitions.
 - **Migrations**: Drizzle Kit for schema migrations.
@@ -49,6 +49,32 @@ Preferred communication style: Simple, everyday language.
 - **Library**: BetterAuth v1.3.34 for email/password authentication, Drizzle adapter for persistence, and secure session management.
 - **Session Security**: Environment variable-based secret key, IP address and user agent tracking.
 - **Authorization**: Role-based access control at the organization level with membership verification.
+  - **Authorization Helpers** (`lib/auth-helpers.ts`): Reusable functions for verifying organization membership and owner/admin access.
+  - **Owner-Only Operations**: Settings updates, project type management, team member invitations, and role changes require owner access.
+  - **Member Access**: All members can view organization data, settings, and team members.
+
+### Organization Settings
+- **Settings Page** (`app/dashboard/settings/page.tsx`): Comprehensive tabbed interface for organization management.
+- **Tabs**:
+  - **General**: Organization name, default hourly rate, logo upload, brand color picker.
+  - **Project Types**: Custom project types with AI prompt templates and default rates.
+  - **Team**: Member list, role management, invitation system with email notifications.
+  - **Billing**: Usage statistics (projects created, forms sent, timelines generated) and Stripe integration placeholder.
+- **Email Integration**: Resend for transactional emails (invitation emails with HTML/plain-text templates).
+
+### API Routes Structure
+- **Organization Context**: All organization-scoped routes accept `organizationId` as a query parameter.
+- **Validation**: Request bodies validated with Zod schemas before database operations.
+- **Authorization**: Owner/member access verified using `lib/auth-helpers.ts` before mutations.
+- **Error Handling**: Proper HTTP status codes (400, 403, 404) with descriptive error messages.
+- **Routes**:
+  - `/api/organization` - Get organization details
+  - `/api/organization/settings` - Get/update organization settings
+  - `/api/organization/project-types` - CRUD operations for custom project types
+  - `/api/organization/members` - List members, remove members, update roles
+  - `/api/organization/invite` - Send invitations
+  - `/api/organization/invites` - List pending invitations
+  - `/api/organization/usage` - Monthly usage statistics
 
 ## External Dependencies
 
@@ -68,6 +94,9 @@ Preferred communication style: Simple, everyday language.
 
 ### AI Services
 - **@anthropic-ai/sdk** (for Claude AI integration)
+
+### Email
+- **Resend** (for transactional emails via Replit integration)
 
 ### UI & Styling
 - **Tailwind CSS 3.4.18**

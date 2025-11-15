@@ -121,31 +121,40 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
-    const settingsData = insertOrganizationSettingsSchema.parse({
-      organizationId: validatedData.organizationId,
-      defaultHourlyRate: validatedData.defaultHourlyRate,
-      brandColor: validatedData.brandColor,
-      logoUrl: validatedData.logoUrl,
-    });
-
     let [settings] = await db
       .select()
       .from(organizationSettings)
       .where(eq(organizationSettings.organizationId, validatedData.organizationId))
       .limit(1);
 
+    const updateData: any = {
+      updatedAt: new Date().toISOString(),
+    };
+
+    if (validatedData.defaultHourlyRate !== undefined) {
+      updateData.defaultHourlyRate = validatedData.defaultHourlyRate;
+    }
+    if (validatedData.brandColor !== undefined) {
+      updateData.brandColor = validatedData.brandColor;
+    }
+    if (validatedData.logoUrl !== undefined) {
+      updateData.logoUrl = validatedData.logoUrl;
+    }
+
     if (settings) {
       [settings] = await db
         .update(organizationSettings)
-        .set({
-          defaultHourlyRate: settingsData.defaultHourlyRate,
-          brandColor: settingsData.brandColor,
-          logoUrl: settingsData.logoUrl,
-          updatedAt: new Date().toISOString(),
-        })
+        .set(updateData)
         .where(eq(organizationSettings.organizationId, validatedData.organizationId))
         .returning();
     } else {
+      const settingsData = insertOrganizationSettingsSchema.parse({
+        organizationId: validatedData.organizationId,
+        defaultHourlyRate: validatedData.defaultHourlyRate || "150",
+        brandColor: validatedData.brandColor || "#10b981",
+        logoUrl: validatedData.logoUrl,
+      });
+
       [settings] = await db
         .insert(organizationSettings)
         .values({

@@ -6,6 +6,14 @@ Scopebound is a modern multi-tenant SaaS application built with Next.js 14, prov
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
+## Development Notes
+
+### Session Persistence & Testing
+- **Session persistence works correctly** when accessing the app via the direct Replit URL
+- **Known limitation**: Session cookies do NOT persist when viewing the app inside the Replit IDE iframe due to browser third-party cookie restrictions
+- **Solution**: Always test authentication flows using the direct application URL, not the IDE preview
+- Authentication uses BetterAuth with email/password, cookies are HttpOnly with 7-day expiry
+
 ## System Architecture
 
 ### Frontend Architecture

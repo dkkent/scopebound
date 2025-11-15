@@ -4,19 +4,11 @@ import { headers } from "next/headers";
 import { UserMenu } from "@/components/dashboard/user-menu";
 
 async function checkAuth() {
-  const requestHeaders = await headers();
-  console.log('[Dashboard] Checking auth...');
-  console.log('[Dashboard] Cookie header:', requestHeaders.get('cookie'));
-  
   const session = await auth.api.getSession({
-    headers: requestHeaders,
+    headers: await headers(),
   });
 
-  console.log('[Dashboard] Session result:', session ? 'exists' : 'null');
-  console.log('[Dashboard] User:', session?.user ? 'exists' : 'null');
-
   if (!session || !session.user) {
-    console.log('[Dashboard] No valid session, redirecting to login');
     redirect("/login");
   }
 

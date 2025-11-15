@@ -16,26 +16,17 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Debug: Log all cookies
-  const allCookies = request.cookies.getAll();
-  console.log('[Middleware] Path:', pathname);
-  console.log('[Middleware] All cookies:', allCookies.map(c => c.name));
-
   // Check for session cookie (basic check - actual validation happens server-side)
   const sessionToken = request.cookies.get("better-auth.session_token");
-  console.log('[Middleware] Session token exists:', !!sessionToken);
-
   const hasSession = !!sessionToken;
 
   // Redirect to login if no session and trying to access protected route
   if (!hasSession && !publicPaths.includes(pathname)) {
-    console.log('[Middleware] No session, redirecting to login');
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
   // Redirect to dashboard if logged in and trying to access auth pages
   if (hasSession && authPaths.includes(pathname)) {
-    console.log('[Middleware] Has session, redirecting to dashboard');
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 

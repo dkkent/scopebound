@@ -95,6 +95,13 @@ export async function POST(
     const baseUrl = getBaseUrl(request.nextUrl.origin);
     const shareUrl = `${baseUrl}/f/${form[0].shareToken}`;
 
+    // Debug logging
+    console.log('[send-form] request.nextUrl.origin:', request.nextUrl.origin);
+    console.log('[send-form] REPLIT_DOMAINS:', process.env.REPLIT_DOMAINS);
+    console.log('[send-form] NEXT_PUBLIC_APP_URL:', process.env.NEXT_PUBLIC_APP_URL);
+    console.log('[send-form] baseUrl:', baseUrl);
+    console.log('[send-form] shareUrl:', shareUrl);
+
     return NextResponse.json({
       success: true,
       shareUrl,

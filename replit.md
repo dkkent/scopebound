@@ -8,6 +8,17 @@ Scopebound is a modern multi-tenant SaaS application built with Next.js 14, feat
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Fixes (November 15, 2025)
+
+### BetterAuth Integration Issues - RESOLVED
+1. **Session Cookie Persistence**: Fixed signup endpoint to use BetterAuth's request handler pattern for proper cookie management
+2. **Middleware Edge Runtime Compatibility**: Removed database calls from middleware (edge runtime doesn't support WebSocket). Now uses cookie presence check only
+3. **Type Serialization**: Changed all `createdAt` fields from `Date` to `string` in TypeScript interfaces to match database schema
+4. **Client Component Boundaries**: Added `"use client"` directives to:
+   - `components/ui/button.tsx` - Required for onClick handlers
+   - `components/dashboard/empty-state.tsx` - Required for interactive components
+5. **Server/Client Component Pattern**: Removed event handler props from server component → client component boundaries
+
 ## System Architecture
 
 ### Frontend Architecture

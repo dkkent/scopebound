@@ -15,35 +15,30 @@ const signupSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, password, name, organizationName } = signupSchema.parse(body);
+    const { email, password, name, organizationName} = signupSchema.parse(body);
 
-    // Create user with BetterAuth
-    let userResponse;
-    try {
-      userResponse = await auth.api.signUpEmail({
-        body: {
-          email,
-          password,
-          name,
-        },
+    // Create a new request with just the auth data for BetterAuth
+    const authRequest = new Request(new URL("/api/auth/sign-up/email", request.url), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password, name }),
+    });
+
+    // Call BetterAuth's handler directly to get proper cookie management
+    const authResponse = await auth.handler(authRequest);
+    const authData = await authResponse.clone().json();
+
+    // If signup failed, return the error
+    if (!authResponse.ok || !authData.user) {
+      return new Response(authResponse.body, {
+        status: authResponse.status,
+        headers: authResponse.headers,
       });
-    } catch (authError) {
-      console.error("BetterAuth signup error:", authError);
-      console.error("Error stack:", authError instanceof Error ? authError.stack : "No stack");
-      return NextResponse.json(
-        { error: "Failed to create user", details: String(authError) },
-        { status: 500 }
-      );
     }
 
-    if (!userResponse || !userResponse.user) {
-      return NextResponse.json(
-        { error: "Failed to create user - no user returned" },
-        { status: 500 }
-      );
-    }
-
-    const userId = userResponse.user.id;
+    const userId = authData.user.id;
 
     // Create organization
     const orgId = randomUUID();
@@ -61,21 +56,15 @@ export async function POST(request: NextRequest) {
       role: "owner",
     });
 
-    // Create response with BetterAuth headers (including Set-Cookie)
-    const response = NextResponse.json({
+    // Return BetterAuth's response with cookies intact
+    return new Response(JSON.stringify({
       success: true,
-      user: userResponse.user,
-      session: userResponse.session,
+      user: authData.user,
+      session: authData.session,
+    }), {
+      status: 200,
+      headers: authResponse.headers, // Preserve Set-Cookie header
     });
-
-    // Copy all headers from BetterAuth response to preserve Set-Cookie
-    if (userResponse.headers) {
-      userResponse.headers.forEach((value, key) => {
-        response.headers.set(key, value);
-      });
-    }
-
-    return response;
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

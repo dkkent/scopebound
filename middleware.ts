@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "./lib/auth";
 
 const publicPaths = ["/", "/login", "/signup"];
 const authPaths = ["/login", "/signup"];
@@ -17,18 +16,17 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Check session for protected routes
-  const session = await auth.api.getSession({
-    headers: request.headers,
-  });
+  // Check for session cookie (basic check - actual validation happens server-side)
+  const sessionToken = request.cookies.get("better-auth.session_token");
+  const hasSession = !!sessionToken;
 
   // Redirect to login if no session and trying to access protected route
-  if (!session && !publicPaths.includes(pathname)) {
+  if (!hasSession && !publicPaths.includes(pathname)) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
   // Redirect to dashboard if logged in and trying to access auth pages
-  if (session && authPaths.includes(pathname)) {
+  if (hasSession && authPaths.includes(pathname)) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 

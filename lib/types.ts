@@ -3,7 +3,7 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  createdAt: Date;
+  createdAt: string;
 }
 
 // Organization types
@@ -11,7 +11,7 @@ export interface Organization {
   id: string;
   name: string;
   ownerId: string;
-  createdAt: Date;
+  createdAt: string;
 }
 
 // Organization Member types
@@ -20,7 +20,7 @@ export interface OrganizationMember {
   organizationId: string;
   userId: string;
   role: "owner" | "member";
-  createdAt: Date;
+  createdAt: string;
 }
 
 // Extended types for frontend

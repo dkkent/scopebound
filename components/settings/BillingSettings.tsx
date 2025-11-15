@@ -12,7 +12,11 @@ interface UsageStats {
   timelinesGenerated: number;
 }
 
-export function BillingSettings() {
+interface BillingSettingsProps {
+  organizationId: string;
+}
+
+export function BillingSettings({ organizationId }: BillingSettingsProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState<UsageStats>({
     projectsCreated: 0,
@@ -23,7 +27,7 @@ export function BillingSettings() {
   useEffect(() => {
     async function fetchUsageStats() {
       try {
-        const response = await fetch("/api/organization/usage");
+        const response = await fetch(`/api/organization/usage?organizationId=${organizationId}`);
         if (response.ok) {
           const data = await response.json();
           setStats(data);
@@ -35,8 +39,10 @@ export function BillingSettings() {
       }
     }
 
-    fetchUsageStats();
-  }, []);
+    if (organizationId) {
+      fetchUsageStats();
+    }
+  }, [organizationId]);
 
   if (isLoading) {
     return <div className="text-muted-foreground">Loading billing information...</div>;

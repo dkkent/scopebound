@@ -25,7 +25,11 @@ interface CustomProjectType {
   aiPromptTemplate: string | null;
 }
 
-export function ProjectTypesSettings() {
+interface ProjectTypesSettingsProps {
+  organizationId: string;
+}
+
+export function ProjectTypesSettings({ organizationId }: ProjectTypesSettingsProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [projectTypes, setProjectTypes] = useState<CustomProjectType[]>([]);
@@ -41,7 +45,7 @@ export function ProjectTypesSettings() {
   useEffect(() => {
     async function fetchProjectTypes() {
       try {
-        const response = await fetch("/api/organization/project-types");
+        const response = await fetch(`/api/organization/project-types?organizationId=${organizationId}`);
         if (response.ok) {
           const data = await response.json();
           setProjectTypes(data);
@@ -53,8 +57,10 @@ export function ProjectTypesSettings() {
       }
     }
 
-    fetchProjectTypes();
-  }, []);
+    if (organizationId) {
+      fetchProjectTypes();
+    }
+  }, [organizationId]);
 
   const handleOpenDialog = (type?: CustomProjectType) => {
     if (type) {
@@ -86,7 +92,10 @@ export function ProjectTypesSettings() {
       const response = await fetch(url, {
         method: editingType ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          organizationId,
+          ...formData,
+        }),
       });
 
       if (!response.ok) {
@@ -123,7 +132,7 @@ export function ProjectTypesSettings() {
     }
 
     try {
-      const response = await fetch(`/api/organization/project-types/${id}`, {
+      const response = await fetch(`/api/organization/project-types/${id}?organizationId=${organizationId}`, {
         method: "DELETE",
       });
 

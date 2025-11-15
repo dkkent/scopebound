@@ -52,7 +52,11 @@ interface OrganizationInvite {
   expiresAt: string;
 }
 
-export function TeamSettings() {
+interface TeamSettingsProps {
+  organizationId: string;
+}
+
+export function TeamSettings({ organizationId }: TeamSettingsProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [members, setMembers] = useState<OrganizationMember[]>([]);
@@ -66,8 +70,8 @@ export function TeamSettings() {
     async function fetchTeam() {
       try {
         const [membersRes, invitesRes] = await Promise.all([
-          fetch("/api/organization/members"),
-          fetch("/api/organization/invites"),
+          fetch(`/api/organization/members?organizationId=${organizationId}`),
+          fetch(`/api/organization/invites?organizationId=${organizationId}`),
         ]);
 
         if (membersRes.ok) {
@@ -86,8 +90,10 @@ export function TeamSettings() {
       }
     }
 
-    fetchTeam();
-  }, []);
+    if (organizationId) {
+      fetchTeam();
+    }
+  }, [organizationId]);
 
   const handleSendInvite = async () => {
     setIsSending(true);
@@ -96,6 +102,7 @@ export function TeamSettings() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          organizationId,
           email: inviteEmail,
           role: inviteRole,
         }),
@@ -134,7 +141,10 @@ export function TeamSettings() {
       const response = await fetch(`/api/organization/members/${memberId}/role`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role: newRole }),
+        body: JSON.stringify({ 
+          organizationId,
+          role: newRole 
+        }),
       });
 
       if (!response.ok) {
@@ -165,7 +175,7 @@ export function TeamSettings() {
     }
 
     try {
-      const response = await fetch(`/api/organization/members/${memberId}`, {
+      const response = await fetch(`/api/organization/members/${memberId}?organizationId=${organizationId}`, {
         method: "DELETE",
       });
 
@@ -191,7 +201,7 @@ export function TeamSettings() {
 
   const handleCancelInvite = async (inviteId: string) => {
     try {
-      const response = await fetch(`/api/organization/invites/${inviteId}`, {
+      const response = await fetch(`/api/organization/invites/${inviteId}?organizationId=${organizationId}`, {
         method: "DELETE",
       });
 

@@ -21,7 +21,11 @@ interface Organization {
   name: string;
 }
 
-export function GeneralSettings() {
+interface GeneralSettingsProps {
+  organizationId: string;
+}
+
+export function GeneralSettings({ organizationId }: GeneralSettingsProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -34,8 +38,8 @@ export function GeneralSettings() {
     async function fetchSettings() {
       try {
         const [settingsRes, orgRes] = await Promise.all([
-          fetch("/api/organization/settings"),
-          fetch("/api/organization"),
+          fetch(`/api/organization/settings?organizationId=${organizationId}`),
+          fetch(`/api/organization?organizationId=${organizationId}`),
         ]);
 
         if (settingsRes.ok) {
@@ -61,8 +65,10 @@ export function GeneralSettings() {
       }
     }
 
-    fetchSettings();
-  }, [toast]);
+    if (organizationId) {
+      fetchSettings();
+    }
+  }, [organizationId, toast]);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -71,6 +77,7 @@ export function GeneralSettings() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          organizationId,
           name: orgName,
           defaultHourlyRate: hourlyRate,
           brandColor,

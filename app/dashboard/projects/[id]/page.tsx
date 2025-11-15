@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Edit, Trash2, FileText, Clock, Activity, Sparkles, Copy, ExternalLink, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Edit, Trash2, FileText, Clock, Activity, Sparkles, Copy, ExternalLink, CheckCircle2, Share2 } from "lucide-react";
 import { FormPreview } from "@/components/forms/FormPreview";
 import type { FormSchema } from "@/components/forms/FormRenderer";
 import { TimelineEditor } from "@/components/timeline/TimelineEditor";
@@ -42,6 +42,7 @@ type ProjectTimeline = {
   totalWeeks: string;
   totalHours: string;
   totalCost: string;
+  shareToken: string | null;
 };
 
 const STATUS_VARIANTS: Record<string, "default" | "secondary" | "success" | "warning" | "destructive"> = {
@@ -85,6 +86,8 @@ export default function ProjectDetailPage() {
   const [sendingForm, setSendingForm] = useState(false);
   const [generatingTimeline, setGeneratingTimeline] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [timelineShareUrl, setTimelineShareUrl] = useState<string | null>(null);
+  const [sharingTimeline, setSharingTimeline] = useState(false);
 
   useEffect(() => {
     async function fetchProject() {
@@ -97,6 +100,12 @@ export default function ProjectDetailPage() {
           setProject(data.project);
           setProjectForm(data.form || null);
           setProjectTimeline(data.timeline || null);
+          
+          // Pre-populate timeline share URL if shareToken exists
+          if (data.timeline && data.timeline.shareToken && data.project.status === "approved") {
+            const baseUrl = window.location.origin;
+            setTimelineShareUrl(`${baseUrl}/timeline/${data.timeline.shareToken}`);
+          }
         } else if (response.status === 404) {
           router.push("/dashboard");
         }
@@ -214,6 +223,49 @@ export default function ProjectDetailPage() {
     }
   };
 
+  const copyTimelineShareLink = () => {
+    if (timelineShareUrl) {
+      navigator.clipboard.writeText(timelineShareUrl);
+      toast({
+        title: "Timeline Link Copied!",
+        description: "Timeline link copied to clipboard.",
+      });
+    }
+  };
+
+  const handleShareTimeline = async () => {
+    setSharingTimeline(true);
+    try {
+      const response = await fetch(`/api/projects/${projectId}/share-timeline`, {
+        method: "POST",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to generate share link");
+      }
+
+      const baseUrl = window.location.origin;
+      const url = `${baseUrl}/timeline/${data.shareToken}`;
+      setTimelineShareUrl(url);
+
+      toast({
+        title: "Timeline Shared!",
+        description: "Timeline link generated and ready to share.",
+      });
+    } catch (error: any) {
+      console.error("Share timeline error:", error);
+      toast({
+        title: "Failed to Share Timeline",
+        description: error.message || "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSharingTimeline(false);
+    }
+  };
+
   const handleGenerateTimeline = async () => {
     setGeneratingTimeline(true);
     try {
@@ -255,6 +307,15 @@ export default function ProjectDetailPage() {
       const data = await response.json();
       setProject(data.project);
       setProjectTimeline(data.timeline || null);
+      
+      // Update timeline share URL if approved and shareToken exists
+      if (data.project.status === "approved" && data.timeline?.shareToken) {
+        const baseUrl = window.location.origin;
+        setTimelineShareUrl(`${baseUrl}/timeline/${data.timeline.shareToken}`);
+      } else if (data.project.status !== "approved") {
+        // Clear share URL if no longer approved
+        setTimelineShareUrl(null);
+      }
     }
   };
 
@@ -565,12 +626,71 @@ export default function ProjectDetailPage() {
             </Card>
           ) : (
             // Timeline exists - show editor
-            <TimelineEditor
-              timeline={projectTimeline.timelineData}
-              projectId={project.id}
-              hourlyRate={project.hourlyRate}
-              onSave={handleTimelineSaved}
-            />
+            <div className="space-y-6">
+              <TimelineEditor
+                timeline={projectTimeline.timelineData}
+                projectId={project.id}
+                hourlyRate={project.hourlyRate}
+                onSave={handleTimelineSaved}
+              />
+
+              {/* Share Timeline Section - shown after approval */}
+              {project.status === "approved" && (
+                <Card data-testid="card-share-timeline">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Share2 className="h-5 w-5" />
+                      Share Timeline with Client
+                    </CardTitle>
+                    <CardDescription>
+                      Generate a shareable link to show the approved timeline to your client
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {timelineShareUrl ? (
+                      <>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            value={timelineShareUrl}
+                            readOnly
+                            data-testid="input-timeline-share-url"
+                          />
+                          <Button
+                            variant="outline"
+                            onClick={copyTimelineShareLink}
+                            data-testid="button-copy-timeline-link"
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            asChild
+                            data-testid="button-open-timeline-link"
+                          >
+                            <a href={timelineShareUrl} target="_blank" rel="noopener noreferrer">
+                              <ExternalLink className="h-4 w-4" />
+                            </a>
+                          </Button>
+                        </div>
+                        <p className="text-sm text-muted-foreground flex items-center gap-2">
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                          Timeline is ready to share! Send this link to your client.
+                        </p>
+                      </>
+                    ) : (
+                      <Button
+                        onClick={handleShareTimeline}
+                        disabled={sharingTimeline}
+                        data-testid="button-share-timeline"
+                      >
+                        <Share2 className="h-4 w-4 mr-2" />
+                        {sharingTimeline ? "Generating Link..." : "Generate Share Link"}
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           )}
         </TabsContent>
 

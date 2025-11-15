@@ -6,6 +6,7 @@ import { eq, and, sql } from "drizzle-orm";
 import { generateForm, sanitizeFormOutput } from "@/lib/ai/generateForm";
 import { ClaudeError, ClaudeRateLimitError, ClaudeOverloadedError } from "@/lib/ai/claude";
 import { nanoid } from "nanoid";
+import { aiRateLimiter } from "@/lib/rate-limit";
 
 /*
  * KNOWN LIMITATION (MVP Phase):
@@ -64,6 +65,17 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const rateLimitResult = await aiRateLimiter.check(request);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { 
+          error: "Rate limit exceeded. Please try again later.",
+          retryAfter: rateLimitResult.reset
+        },
+        { status: 429 }
+      );
+    }
+
     const session = await auth.api.getSession({
       headers: request.headers,
     });

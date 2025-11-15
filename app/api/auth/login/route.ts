@@ -1,8 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { authRateLimiter } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
+    const rateLimitResult = await authRateLimiter.check(request);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { 
+          error: "Too many login attempts. Please try again later.",
+          retryAfter: rateLimitResult.reset
+        },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
     const { email, password } = body;
 

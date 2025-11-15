@@ -8,9 +8,21 @@ import { sendEmail } from "@/lib/email/sendEmail";
 import { generateInviteEmailHtml, generateInviteEmailText } from "@/lib/email/inviteEmail";
 import { verifyOwnerAccess } from "@/lib/auth-helpers";
 import { z } from "zod";
+import { inviteRateLimiter } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
+    const rateLimitResult = await inviteRateLimiter.check(request);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { 
+          error: "Too many invitation requests. Please try again later.",
+          retryAfter: rateLimitResult.reset
+        },
+        { status: 429 }
+      );
+    }
+
     const session = await auth.api.getSession({
       headers: request.headers,
     });
@@ -105,7 +117,7 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid input", details: error.errors },
+        { error: "Invalid input", details: error.issues },
         { status: 400 }
       );
     }

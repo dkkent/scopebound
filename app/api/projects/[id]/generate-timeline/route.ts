@@ -5,6 +5,7 @@ import { projects, projectForms, projectTimelines, organizationMembers, organiza
 import { eq, and, sql } from "drizzle-orm";
 import { generateTimeline } from "@/lib/ai/generateTimeline";
 import { ClaudeError } from "@/lib/ai/claude";
+import { aiRateLimiter } from "@/lib/rate-limit";
 
 async function verifyOrganizationMembership(userId: string, organizationId: string) {
   const membership = await db
@@ -26,6 +27,17 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const rateLimitResult = await aiRateLimiter.check(request);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { 
+          error: "Rate limit exceeded. Please try again later.",
+          retryAfter: rateLimitResult.reset
+        },
+        { status: 429 }
+      );
+    }
+
     const session = await auth.api.getSession({
       headers: request.headers,
     });

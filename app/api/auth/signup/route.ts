@@ -4,6 +4,7 @@ import { organizations, organizationMembers } from "@/lib/schema";
 import { auth } from "@/lib/auth";
 import { z } from "zod";
 import { randomUUID } from "crypto";
+import { authRateLimiter } from "@/lib/rate-limit";
 
 const signupSchema = z.object({
   email: z.string().email(),
@@ -14,6 +15,17 @@ const signupSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    const rateLimitResult = await authRateLimiter.check(request);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { 
+          error: "Too many signup attempts. Please try again later.",
+          retryAfter: rateLimitResult.reset
+        },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
     const { email, password, name, organizationName} = signupSchema.parse(body);
 
@@ -68,7 +80,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid input", details: error.errors },
+        { error: "Invalid input", details: error.issues },
         { status: 400 }
       );
     }

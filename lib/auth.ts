@@ -1,7 +1,9 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { nextCookies } from "better-auth/next-js";
 import { db } from "./db";
 import { users, sessions, accounts, verifications } from "./schema";
+import { randomUUID } from "crypto";
 
 // Build trusted origins list from environment
 const buildTrustedOrigins = () => {
@@ -40,10 +42,24 @@ export const auth = betterAuth({
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days
     updateAge: 60 * 60 * 24, // 1 day
+    cookieCache: {
+      enabled: true,
+      maxAge: 60 * 60 * 24 * 7, // 7 days - match session expiration
+    },
   },
   secret: process.env.SESSION_SECRET || process.env.BETTER_AUTH_SECRET || "development-secret-change-in-production",
   trustedOrigins: buildTrustedOrigins(),
   baseURL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:5000",
+  advanced: {
+    cookiePrefix: "better-auth",
+    generateId: () => randomUUID(),
+    crossSubDomainCookies: {
+      enabled: true,
+    },
+  },
+  plugins: [
+    nextCookies(), // Required for Next.js to properly handle session cookies
+  ],
 });
 
 export type Session = typeof auth.$Infer.Session.session;

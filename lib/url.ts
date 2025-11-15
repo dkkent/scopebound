@@ -4,8 +4,13 @@
  * especially when running in containerized/proxied environments like Replit
  */
 export function getBaseUrl(requestOrigin?: string): string {
-  // 1. Prefer explicit NEXT_PUBLIC_APP_URL if set
-  if (process.env.NEXT_PUBLIC_APP_URL) {
+  // Helper to check if URL is localhost
+  const isLocalhost = (url: string) => {
+    return url.includes('localhost') || url.includes('127.0.0.1');
+  };
+
+  // 1. Prefer explicit NEXT_PUBLIC_APP_URL if set and not localhost
+  if (process.env.NEXT_PUBLIC_APP_URL && !isLocalhost(process.env.NEXT_PUBLIC_APP_URL)) {
     return process.env.NEXT_PUBLIC_APP_URL;
   }
 
@@ -16,11 +21,11 @@ export function getBaseUrl(requestOrigin?: string): string {
     return `https://${primaryDomain}`;
   }
 
-  // 3. Fall back to request origin (for local development)
-  if (requestOrigin) {
+  // 3. Fall back to request origin if not localhost
+  if (requestOrigin && !isLocalhost(requestOrigin)) {
     return requestOrigin;
   }
 
-  // 4. Default fallback
+  // 4. Default fallback for local development
   return "http://localhost:5000";
 }

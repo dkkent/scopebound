@@ -47,20 +47,20 @@ export function UserMenu({ userName, userEmail }: UserMenuProps) {
         className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-accent transition-colors"
         data-testid="button-user-menu"
       >
-        <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-sm">
+        <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-sm" data-testid="avatar-user">
           {userName.charAt(0).toUpperCase()}
         </div>
         <div className="flex flex-col items-start">
-          <span className="text-sm font-medium">{userName}</span>
+          <span className="text-sm font-medium" data-testid="text-user-name">{userName}</span>
         </div>
         <ChevronDown className="h-4 w-4 text-muted-foreground" />
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-64 bg-popover border border-border rounded-md shadow-lg z-50">
+        <div className="absolute right-0 mt-2 w-64 bg-popover border border-border rounded-md shadow-lg z-50" data-testid="dropdown-user-menu">
           <div className="p-3 border-b border-border">
-            <p className="text-sm font-medium">{userName}</p>
-            <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
+            <p className="text-sm font-medium" data-testid="text-user-name-dropdown">{userName}</p>
+            <p className="text-xs text-muted-foreground truncate" data-testid="text-user-email">{userEmail}</p>
           </div>
           <div className="p-2">
             <Button

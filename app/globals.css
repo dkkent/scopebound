@@ -1,59 +1,288 @@
+/**
+ * GLOBALS.CSS
+ * Tailwind + Custom Styles
+ */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  /* ========================================
+   * THEME VARIABLES - Easy to update for re-theming
+   * ======================================== */
   :root {
+    /* Background Colors */
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
+    
+    /* Card */
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
+    
+    /* Popover */
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    
+    /* Primary Brand Color - Easy to swap! */
+    --primary: 142 76% 36%;
+    --primary-foreground: 0 0% 100%;
+    
+    /* Secondary */
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
+    
+    /* Muted */
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
+    
+    /* Accent */
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
+    
+    /* Semantic Colors */
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
+    
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    
+    --warning: 38 92% 50%;
+    --warning-foreground: 222.2 47.4% 11.2%;
+    
+    --info: 217 91% 60%;
+    --info-foreground: 0 0% 100%;
+    
+    /* Borders & Inputs */
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --ring: 142 76% 36%;
+    
+    /* Chart Colors */
+    --chart-1: 142 76% 36%;
+    --chart-2: 217 91% 60%;
+    --chart-3: 38 92% 50%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+    
+    /* Radius */
+    --radius: 0.5rem;
+    
+    /* Typography */
+    --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+    
+    /* Spacing (4px grid) */
+    --spacing-1: 0.25rem;
+    --spacing-2: 0.5rem;
+    --spacing-3: 0.75rem;
+    --spacing-4: 1rem;
+    --spacing-6: 1.5rem;
+    --spacing-8: 2rem;
+    --spacing-12: 3rem;
+    --spacing-16: 4rem;
   }
 
   .dark {
+    /* Background Colors */
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
+    
+    /* Card */
     --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
+    
+    /* Popover */
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
+    
+    /* Primary Brand Color */
+    --primary: 142 70% 45%;
     --primary-foreground: 222.2 47.4% 11.2%;
+    
+    /* Secondary */
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
+    
+    /* Muted */
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
+    
+    /* Accent */
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
+    
+    /* Semantic Colors */
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
+    
+    --success: 142 70% 45%;
+    --success-foreground: 222.2 47.4% 11.2%;
+    
+    --warning: 38 92% 50%;
+    --warning-foreground: 222.2 47.4% 11.2%;
+    
+    --info: 217 91% 60%;
+    --info-foreground: 222.2 47.4% 11.2%;
+    
+    /* Borders & Inputs */
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --ring: 142 70% 45%;
+    
+    /* Chart Colors */
+    --chart-1: 142 70% 45%;
+    --chart-2: 217 91% 60%;
+    --chart-3: 38 92% 50%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
   }
-}
 
-@layer base {
+  /* ========================================
+   * BASE STYLES
+   * ======================================== */
   * {
     @apply border-border;
   }
+  
   body {
-    @apply bg-background text-foreground;
-    font-family: var(--font-inter), Inter, sans-serif;
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans);
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+  
+  h1 {
+    @apply text-4xl;
+  }
+  
+  h2 {
+    @apply text-2xl;
+  }
+  
+  h3 {
+    @apply text-lg;
+  }
+}
+
+@layer components {
+  /* ========================================
+   * CUSTOM COMPONENT STYLES
+   * ======================================== */
+   
+  /* Custom scrollbar */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply bg-border rounded-full;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/50;
+  }
+  
+  /* Focus visible */
+  .focus-visible-ring:focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+  
+  /* Container padding */
+  .container-padding {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+  
+  /* Page header */
+  .page-header {
+    @apply border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60;
+  }
+  
+  /* Card hover */
+  .card-hover {
+    @apply transition-all duration-200 hover:shadow-md hover:border-primary/20;
+  }
+  
+  /* Empty state */
+  .empty-state {
+    @apply flex flex-col items-center justify-center py-12 px-4 text-center;
+  }
+  
+  /* Status badges */
+  .status-draft {
+    @apply bg-muted text-muted-foreground;
+  }
+  
+  .status-active {
+    @apply bg-success/10 text-success border-success/20;
+  }
+  
+  .status-warning {
+    @apply bg-warning/10 text-warning border-warning/20;
+  }
+  
+  .status-error {
+    @apply bg-destructive/10 text-destructive border-destructive/20;
+  }
+}
+
+@layer utilities {
+  /* ========================================
+   * UTILITY CLASSES
+   * ======================================== */
+   
+  /* Text truncation */
+  .truncate-2 {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+  }
+  
+  .truncate-3 {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+  }
+  
+  /* Animations */
+  .animate-in {
+    animation: fadeIn 0.2s ease-in-out;
+  }
+  
+  .animate-out {
+    animation: fadeOut 0.2s ease-in-out;
+  }
+}
+
+/* ========================================
+ * KEYFRAMES
+ * ======================================== */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-4px);
   }
 }

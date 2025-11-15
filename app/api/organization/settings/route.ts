@@ -167,8 +167,9 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json(settings);
   } catch (error) {
     if (error instanceof z.ZodError) {
+      console.error("Validation error:", JSON.stringify(error.issues, null, 2));
       return NextResponse.json(
-        { error: "Invalid input", details: error.errors },
+        { error: "Invalid input", details: error.issues },
         { status: 400 }
       );
     }

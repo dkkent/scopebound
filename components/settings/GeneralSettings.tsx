@@ -81,7 +81,7 @@ export function GeneralSettings({ organizationId }: GeneralSettingsProps) {
           name: orgName,
           defaultHourlyRate: hourlyRate,
           brandColor,
-          logoUrl: logoUrl || null,
+          logoUrl: logoUrl || "",
         }),
       });
 

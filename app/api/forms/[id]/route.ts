@@ -128,7 +128,7 @@ function validateFormResponses(responses: Record<string, any>, formData: any): {
 
 // POST /api/forms/[id]/submit - Submit form responses (public, no auth required)
 const submitSchema = z.object({
-  responses: z.record(z.any()),
+  responses: z.record(z.string(), z.any()),
   clientEmail: z.string().email().optional(),
 });
 

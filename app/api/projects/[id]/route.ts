@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
-import { projects, organizationMembers } from "@/lib/schema";
+import { projects, organizationMembers, projectForms } from "@/lib/schema";
 import { updateProjectSchema } from "@/lib/schema";
 import { eq, and } from "drizzle-orm";
 import { z } from "zod";
@@ -69,7 +69,18 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({ project: result.project });
+    // Also fetch form data if it exists
+    const formResult = await db
+      .select()
+      .from(projectForms)
+      .where(eq(projectForms.projectId, id))
+      .limit(1);
+
+    // Drizzle already maps database columns to camelCase TypeScript properties
+    return NextResponse.json({ 
+      project: result.project,
+      form: formResult.length > 0 ? formResult[0] : null
+    });
   } catch (error) {
     console.error("Get project error:", error);
     return NextResponse.json(

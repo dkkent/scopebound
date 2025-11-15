@@ -8,7 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Edit, Trash2, FileText, Clock, Activity } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ArrowLeft, Edit, Trash2, FileText, Clock, Activity, Sparkles, Copy, ExternalLink, CheckCircle2 } from "lucide-react";
+import { FormPreview } from "@/components/forms/FormPreview";
+import type { FormSchema } from "@/components/forms/FormRenderer";
+import { useToast } from "@/hooks/use-toast";
 
 type Project = {
   id: string;
@@ -20,6 +25,14 @@ type Project = {
   status: string;
   createdAt: string;
   updatedAt: string;
+};
+
+type ProjectForm = {
+  id: string;
+  formData: FormSchema;
+  submittedAt: string | null;
+  submittedData: Record<string, any> | null;
+  shareToken: string;
 };
 
 const STATUS_VARIANTS: Record<string, "default" | "secondary" | "success" | "warning" | "destructive"> = {
@@ -51,11 +64,16 @@ const PROJECT_TYPE_LABELS: Record<string, string> = {
 export default function ProjectDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { toast } = useToast();
   const projectId = params?.id as string;
   
   const [project, setProject] = useState<Project | null>(null);
+  const [projectForm, setProjectForm] = useState<ProjectForm | null>(null);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
+  const [generatingForm, setGeneratingForm] = useState(false);
+  const [sendingForm, setSendingForm] = useState(false);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchProject() {
@@ -66,6 +84,7 @@ export default function ProjectDetailPage() {
         if (response.ok) {
           const data = await response.json();
           setProject(data.project);
+          setProjectForm(data.form || null);
         } else if (response.status === 404) {
           router.push("/dashboard");
         }
@@ -96,6 +115,90 @@ export default function ProjectDetailPage() {
       console.error("Failed to delete project:", error);
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const handleGenerateForm = async () => {
+    setGeneratingForm(true);
+    try {
+      const response = await fetch(`/api/projects/${projectId}/generate-form`, {
+        method: "POST",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to generate form");
+      }
+
+      // Update form state
+      setProjectForm({
+        id: data.formId,
+        formData: data.formData,
+        submittedAt: null,
+        submittedData: null,
+        shareToken: "", // Will be populated when sending
+      });
+
+      toast({
+        title: "Form Generated!",
+        description: "Your AI-powered intake form is ready to preview.",
+      });
+    } catch (error: any) {
+      console.error("Form generation error:", error);
+      toast({
+        title: "Generation Failed",
+        description: error.message || "Failed to generate form. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setGeneratingForm(false);
+    }
+  };
+
+  const handleSendForm = async () => {
+    setSendingForm(true);
+    try {
+      const response = await fetch(`/api/projects/${projectId}/send-form`, {
+        method: "POST",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to generate share link");
+      }
+
+      setShareUrl(data.shareUrl);
+      
+      // Update project status
+      if (project) {
+        setProject({ ...project, status: "form_sent" });
+      }
+
+      toast({
+        title: "Form Ready!",
+        description: "Share link generated. You can now send this to your client.",
+      });
+    } catch (error: any) {
+      console.error("Send form error:", error);
+      toast({
+        title: "Failed to Generate Link",
+        description: error.message || "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSendingForm(false);
+    }
+  };
+
+  const copyShareLink = () => {
+    if (shareUrl) {
+      navigator.clipboard.writeText(shareUrl);
+      toast({
+        title: "Link Copied!",
+        description: "Share link copied to clipboard.",
+      });
     }
   };
 
@@ -236,18 +339,130 @@ export default function ProjectDetailPage() {
 
         {/* Form Tab */}
         <TabsContent value="form" data-testid="tab-content-form">
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-              <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Client Form</h3>
-              <p className="text-muted-foreground max-w-md">
-                Generate and send a custom intake form to your client to gather detailed requirements.
-              </p>
-              <Button className="mt-6" disabled data-testid="button-generate-form">
-                Generate Form (Coming Soon)
-              </Button>
-            </CardContent>
-          </Card>
+          {!projectForm ? (
+            // No form generated yet
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                <Sparkles className="h-12 w-12 text-primary mb-4" />
+                <h3 className="text-lg font-semibold mb-2">AI-Powered Client Form</h3>
+                <p className="text-muted-foreground max-w-md mb-6">
+                  Generate a custom intake questionnaire using AI based on your project brief. 
+                  Get detailed requirements from your client with smart questions and time/cost estimates.
+                </p>
+                <Button 
+                  onClick={handleGenerateForm}
+                  disabled={generatingForm}
+                  size="lg"
+                  data-testid="button-generate-form"
+                >
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  {generatingForm ? "Generating Form..." : "Generate Form with AI"}
+                </Button>
+                {generatingForm && (
+                  <p className="text-sm text-muted-foreground mt-4">
+                    This may take 30-60 seconds. Claude AI is analyzing your project...
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          ) : projectForm.submittedAt ? (
+            // Form submitted - show responses
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <CheckCircle2 className="h-5 w-5 text-primary" />
+                        Form Submitted
+                      </CardTitle>
+                      <CardDescription>
+                        Submitted on {new Date(projectForm.submittedAt).toLocaleString()}
+                      </CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    {projectForm.formData.sections.map((section, idx) => (
+                      <div key={idx} className="space-y-4">
+                        <div>
+                          <h4 className="font-semibold text-lg">{section.title}</h4>
+                          {section.description && (
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {section.description}
+                            </p>
+                          )}
+                        </div>
+                        {section.questions.map((question) => {
+                          const answer = projectForm.submittedData?.[question.id];
+                          return (
+                            <div key={question.id} className="pl-4 border-l-2 border-border">
+                              <p className="text-sm font-medium">{question.label}</p>
+                              <p className="text-sm text-muted-foreground mt-1" data-testid={`answer-${question.id}`}>
+                                {Array.isArray(answer) ? answer.join(", ") : answer || "No answer provided"}
+                              </p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            // Form generated - show preview and send option
+            <div className="space-y-6">
+              {shareUrl ? (
+                // Share link generated
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Form Sent to Client</CardTitle>
+                    <CardDescription>
+                      Share this link with your client to collect their responses
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={shareUrl}
+                        readOnly
+                        data-testid="input-share-url"
+                      />
+                      <Button
+                        variant="outline"
+                        onClick={copyShareLink}
+                        data-testid="button-copy-link"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        asChild
+                        data-testid="button-open-link"
+                      >
+                        <a href={shareUrl} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                      </Button>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Waiting for client to submit their responses...
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : null}
+              
+              {/* Form Preview */}
+              <FormPreview
+                formSchema={projectForm.formData}
+                onSendToClient={shareUrl ? undefined : handleSendForm}
+                isSending={sendingForm}
+                readOnly={!!shareUrl}
+              />
+            </div>
+          )}
         </TabsContent>
 
         {/* Timeline Tab */}

@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { projects, projectForms, organizationMembers } from "@/lib/schema";
 import { eq, and, sql } from "drizzle-orm";
+import { getBaseUrl } from "@/lib/url";
 
 // Helper to verify organization membership
 async function verifyOrganizationMembership(userId: string, organizationId: string) {
@@ -90,8 +91,8 @@ export async function POST(
         .where(eq(projects.id, id));
     }
 
-    // Get the base URL from the request
-    const baseUrl = request.nextUrl.origin;
+    // Get the correct base URL (uses environment variables for Replit deployments)
+    const baseUrl = getBaseUrl(request.nextUrl.origin);
     const shareUrl = `${baseUrl}/f/${form[0].shareToken}`;
 
     return NextResponse.json({

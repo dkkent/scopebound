@@ -14,6 +14,12 @@ Preferred communication style: Simple, everyday language.
 - **Solution**: Always test authentication flows using the direct application URL, not the IDE preview
 - Authentication uses BetterAuth with email/password, cookies are HttpOnly with 7-day expiry
 
+### Shareable Links
+- **URL generation**: Uses `lib/url.ts` helper to automatically detect correct base URL for Replit deployments
+- **Priority order**: NEXT_PUBLIC_APP_URL (if not localhost) → REPLIT_DOMAINS → request origin (if not localhost) → localhost fallback
+- **Replit deployment**: Automatically uses REPLIT_DOMAINS environment variable for correct public URLs
+- **Public forms**: Clients can access forms via `/f/[shareToken]` without authentication
+
 ## System Architecture
 
 ### Frontend Architecture

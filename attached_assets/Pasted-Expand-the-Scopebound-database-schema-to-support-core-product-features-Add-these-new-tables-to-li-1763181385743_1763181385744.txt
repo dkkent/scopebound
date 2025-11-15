@@ -1,0 +1,61 @@
+Expand the Scopebound database schema to support core product features.
+
+Add these new tables to /lib/schema.ts (keep all existing tables):
+
+**projects table:**
+- id: text (primary key, use nanoid)
+- organizationId: text (foreign key to organizations.id, cascade delete)
+- name: text (required)
+- clientName: text (required)
+- projectType: enum ['saas', 'mobile', 'web', 'ecommerce', 'custom']
+- projectBrief: text (the AI prompt/description)
+- hourlyRate: decimal (numeric type)
+- status: enum ['draft', 'form_sent', 'scoping', 'approved', 'in_progress', 'completed']
+- createdBy: text (foreign key to users.id)
+- createdAt: timestamp (default now)
+- updatedAt: timestamp (default now)
+
+**project_forms table:**
+- id: text (primary key)
+- projectId: text (foreign key to projects.id, cascade delete, unique - one form per project)
+- formData: jsonb (stores the dynamic form structure from AI)
+- clientEmail: text (nullable - who the form was sent to)
+- shareToken: text (unique - for public form access)
+- submittedAt: timestamp (nullable)
+- submittedData: jsonb (nullable - client's responses)
+- createdAt: timestamp (default now)
+- updatedAt: timestamp (default now)
+
+**project_timelines table:**
+- id: text (primary key)
+- projectId: text (foreign key to projects.id, cascade delete)
+- timelineData: jsonb (stores phases, durations, dependencies)
+- totalWeeks: decimal (numeric type)
+- totalHours: decimal (numeric type)
+- totalCost: decimal (numeric type)
+- shareToken: text (unique - for public timeline viewing)
+- createdAt: timestamp (default now)
+- updatedAt: timestamp (default now)
+
+**organization_settings table:**
+- id: text (primary key)
+- organizationId: text (foreign key to organizations.id, cascade delete, unique)
+- defaultHourlyRate: decimal (numeric type, default 150)
+- brandColor: text (hex color, default '#10b981')
+- logoUrl: text (nullable)
+- customPrompts: jsonb (nullable - custom AI prompts per project type)
+- createdAt: timestamp (default now)
+- updatedAt: timestamp (default now)
+
+Requirements:
+1. Add all tables to /lib/schema.ts with proper Drizzle ORM syntax
+2. Define all relations (projects -> organization, projects -> user, forms -> project, etc.)
+3. Create Zod validation schemas for each table using createInsertSchema
+4. Add proper indexes on foreign keys and frequently queried fields
+5. Keep all existing tables (users, organizations, sessions, etc.) - DO NOT REMOVE THEM
+
+After creating the schema:
+1. Generate a migration: npx drizzle-kit generate
+2. Push to database: npx drizzle-kit push
+
+Success criteria: Schema updated, migration successful, no errors in database

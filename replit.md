@@ -17,7 +17,11 @@ Preferred communication style: Simple, everyday language.
 4. **Client Component Boundaries**: Added `"use client"` directives to:
    - `components/ui/button.tsx` - Required for onClick handlers
    - `components/dashboard/empty-state.tsx` - Required for interactive components
+   - `components/dashboard/user-menu.tsx` - Required for dropdown menu state and interactions
 5. **Server/Client Component Pattern**: Removed event handler props from server component → client component boundaries
+6. **User Menu & Logout**: Added user menu dropdown in dashboard header with logout functionality
+7. **Trusted Origins**: Updated BetterAuth configuration to include Replit domains from `REPLIT_DOMAINS` environment variable for CORS compatibility
+8. **Login Endpoint**: Created custom `/api/auth/login` endpoint that proxies to BetterAuth's sign-in handler for proper session cookie management
 
 ## System Architecture
 

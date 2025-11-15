@@ -54,15 +54,15 @@ export const auth = betterAuth({
     cookiePrefix: "better-auth",
     generateId: () => randomUUID(),
     crossSubDomainCookies: {
-      enabled: true,
+      enabled: false, // Disable cross-subdomain to avoid cookie scope issues
     },
     // Explicit cookie attributes for persistence
     defaultCookieAttributes: {
-      maxAge: 60 * 60 * 24 * 7, // 7 days - CRITICAL for persistent cookies
-      secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 60 * 24 * 7, // 7 days - CRITICAL: without this, cookies expire when browser closes
       sameSite: "lax", // Allow cross-page navigation
       path: "/",
-      // httpOnly managed by BetterAuth per cookie type (session vs cache)
+      domain: undefined, // Don't set domain - use current domain
+      // httpOnly and secure managed by BetterAuth based on cookie type and environment
     },
   },
   plugins: [

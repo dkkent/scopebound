@@ -5,9 +5,6 @@
   "/api/organizations/route": "app/api/organizations/route.js",
   "/api/projects/route": "app/api/projects/route.js",
   "/api/projects/[id]/route": "app/api/projects/[id]/route.js",
-  "/api/projects/[id]/send-form/route": "app/api/projects/[id]/send-form/route.js",
-  "/f/[formId]/page": "app/f/[formId]/page.js",
-  "/api/forms/[id]/route": "app/api/forms/[id]/route.js",
   "/dashboard/page": "app/dashboard/page.js",
   "/dashboard/projects/[id]/page": "app/dashboard/projects/[id]/page.js"
 }

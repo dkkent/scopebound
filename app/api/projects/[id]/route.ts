@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
-import { projects, organizationMembers, projectForms } from "@/lib/schema";
+import { projects, organizationMembers, projectForms, projectTimelines } from "@/lib/schema";
 import { updateProjectSchema } from "@/lib/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { z } from "zod";
 
 // Helper to verify organization membership
@@ -76,10 +76,19 @@ export async function GET(
       .where(eq(projectForms.projectId, id))
       .limit(1);
 
+    // Fetch latest timeline if it exists
+    const timelineResult = await db
+      .select()
+      .from(projectTimelines)
+      .where(eq(projectTimelines.projectId, id))
+      .orderBy(desc(projectTimelines.createdAt))
+      .limit(1);
+
     // Drizzle already maps database columns to camelCase TypeScript properties
     return NextResponse.json({ 
       project: result.project,
-      form: formResult.length > 0 ? formResult[0] : null
+      form: formResult.length > 0 ? formResult[0] : null,
+      timeline: timelineResult.length > 0 ? timelineResult[0] : null
     });
   } catch (error) {
     console.error("Get project error:", error);

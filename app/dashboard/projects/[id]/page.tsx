@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, Edit, Trash2, FileText, Clock, Activity, Sparkles, Copy, ExternalLink, CheckCircle2 } from "lucide-react";
 import { FormPreview } from "@/components/forms/FormPreview";
 import type { FormSchema } from "@/components/forms/FormRenderer";
+import { TimelineEditor } from "@/components/timeline/TimelineEditor";
 import { useToast } from "@/hooks/use-toast";
 
 type Project = {
@@ -33,6 +34,14 @@ type ProjectForm = {
   submittedAt: string | null;
   submittedData: Record<string, any> | null;
   shareToken: string;
+};
+
+type ProjectTimeline = {
+  id: string;
+  timelineData: any;
+  totalWeeks: string;
+  totalHours: string;
+  totalCost: string;
 };
 
 const STATUS_VARIANTS: Record<string, "default" | "secondary" | "success" | "warning" | "destructive"> = {
@@ -69,10 +78,12 @@ export default function ProjectDetailPage() {
   
   const [project, setProject] = useState<Project | null>(null);
   const [projectForm, setProjectForm] = useState<ProjectForm | null>(null);
+  const [projectTimeline, setProjectTimeline] = useState<ProjectTimeline | null>(null);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [generatingForm, setGeneratingForm] = useState(false);
   const [sendingForm, setSendingForm] = useState(false);
+  const [generatingTimeline, setGeneratingTimeline] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -85,6 +96,7 @@ export default function ProjectDetailPage() {
           const data = await response.json();
           setProject(data.project);
           setProjectForm(data.form || null);
+          setProjectTimeline(data.timeline || null);
         } else if (response.status === 404) {
           router.push("/dashboard");
         }
@@ -199,6 +211,50 @@ export default function ProjectDetailPage() {
         title: "Link Copied!",
         description: "Share link copied to clipboard.",
       });
+    }
+  };
+
+  const handleGenerateTimeline = async () => {
+    setGeneratingTimeline(true);
+    try {
+      const response = await fetch(`/api/projects/${projectId}/generate-timeline`, {
+        method: "POST",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to generate timeline");
+      }
+
+      setProjectTimeline(data.timeline);
+      
+      if (project) {
+        setProject({ ...project, status: "scoping" });
+      }
+
+      toast({
+        title: "Timeline Generated!",
+        description: "AI-powered timeline is ready for review and editing.",
+      });
+    } catch (error: any) {
+      console.error("Timeline generation error:", error);
+      toast({
+        title: "Generation Failed",
+        description: error.message || "Failed to generate timeline. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setGeneratingTimeline(false);
+    }
+  };
+
+  const handleTimelineSaved = async () => {
+    const response = await fetch(`/api/projects/${projectId}`);
+    if (response.ok) {
+      const data = await response.json();
+      setProject(data.project);
+      setProjectTimeline(data.timeline || null);
     }
   };
 
@@ -467,18 +523,55 @@ export default function ProjectDetailPage() {
 
         {/* Timeline Tab */}
         <TabsContent value="timeline" data-testid="tab-content-timeline">
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-              <Clock className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Project Timeline</h3>
-              <p className="text-muted-foreground max-w-md">
-                AI-generated project timeline with phases, milestones, and cost estimates based on your project brief.
-              </p>
-              <Button className="mt-6" disabled data-testid="button-generate-timeline">
-                Generate Timeline (Coming Soon)
-              </Button>
-            </CardContent>
-          </Card>
+          {!projectTimeline ? (
+            // No timeline generated yet
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                <Clock className="h-12 w-12 text-primary mb-4" />
+                <h3 className="text-lg font-semibold mb-2">AI-Powered Timeline Generation</h3>
+                <p className="text-muted-foreground max-w-md mb-6">
+                  Generate a detailed project timeline with phases, tasks, duration estimates, and cost breakdowns 
+                  based on your project brief and client's form responses.
+                </p>
+                {!projectForm?.submittedAt ? (
+                  <div className="max-w-md">
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Timeline generation requires the client to submit the intake form first.
+                    </p>
+                    <Button disabled data-testid="button-generate-timeline">
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Generate Timeline
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <Button 
+                      onClick={handleGenerateTimeline}
+                      disabled={generatingTimeline}
+                      size="lg"
+                      data-testid="button-generate-timeline"
+                    >
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      {generatingTimeline ? "Generating Timeline..." : "Generate Timeline with AI"}
+                    </Button>
+                    {generatingTimeline && (
+                      <p className="text-sm text-muted-foreground mt-4">
+                        This may take 30-60 seconds. Claude AI is analyzing the project scope...
+                      </p>
+                    )}
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          ) : (
+            // Timeline exists - show editor
+            <TimelineEditor
+              timeline={projectTimeline.timelineData}
+              projectId={project.id}
+              hourlyRate={project.hourlyRate}
+              onSave={handleTimelineSaved}
+            />
+          )}
         </TabsContent>
 
         {/* Activity Tab */}

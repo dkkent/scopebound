@@ -1,3 +1,12 @@
 {
-  "/page": "app/page.js"
+  "/page": "app/page.js",
+  "/login/page": "app/login/page.js",
+  "/api/auth/[...all]/route": "app/api/auth/[...all]/route.js",
+  "/api/organization/route": "app/api/organization/route.js",
+  "/api/organization/settings/route": "app/api/organization/settings/route.js",
+  "/api/organization/project-types/route": "app/api/organization/project-types/route.js",
+  "/api/organization/members/route": "app/api/organization/members/route.js",
+  "/api/organization/invites/route": "app/api/organization/invites/route.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/dashboard/settings/page": "app/dashboard/settings/page.js"
 }

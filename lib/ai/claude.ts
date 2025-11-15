@@ -82,6 +82,11 @@ export function estimateTokensForMessages(
 }
 
 // Rate limiting helpers
+// NOTE: This is an in-memory rate limiter suitable for single-instance deployments.
+// For production multi-instance/serverless environments, consider using:
+// - Redis-based rate limiting (e.g., upstash/ratelimit)
+// - Edge/CDN rate limiting
+// - Anthropic's built-in rate limiting via API key quotas
 export class RateLimiter {
   private requests: number[] = [];
   private readonly windowMs: number;

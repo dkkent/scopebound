@@ -144,9 +144,11 @@ export async function POST(
       savedForm = newForm[0];
     }
 
+    // Return only the form data, excluding sensitive fields like shareToken
     return NextResponse.json({
       success: true,
-      form: savedForm,
+      formData: savedForm.formData,
+      formId: savedForm.id,
       message: "Form generated successfully",
     });
   } catch (error) {

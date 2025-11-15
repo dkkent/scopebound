@@ -7,6 +7,21 @@ import { generateForm, sanitizeFormOutput } from "@/lib/ai/generateForm";
 import { ClaudeError, ClaudeRateLimitError, ClaudeOverloadedError } from "@/lib/ai/claude";
 import { nanoid } from "nanoid";
 
+/*
+ * KNOWN LIMITATION (MVP Phase):
+ * - Claude API calls can take 30-60 seconds for complex forms
+ * - Replit supports long timeouts, but production hosting (Vercel/others) may not
+ * - TODO before production: Implement background job queue (BullMQ + Redis)
+ *   - Return job ID immediately
+ *   - Poll for completion
+ *   - Handle timeout gracefully with retry
+ * 
+ * Current workaround: Works on Replit. For production, consider:
+ *   - Vercel Pro (300s timeout)
+ *   - Railway (configurable timeouts)
+ *   - Self-hosted (no timeout limits)
+ */
+
 // Helper to verify organization membership
 async function verifyOrganizationMembership(userId: string, organizationId: string) {
   const membership = await db

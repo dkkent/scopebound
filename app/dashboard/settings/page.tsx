@@ -1,56 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/ui/page-header";
 import { GeneralSettings } from "@/components/settings/GeneralSettings";
 import { ProjectTypesSettings } from "@/components/settings/ProjectTypesSettings";
 import { TeamSettings } from "@/components/settings/TeamSettings";
 import { BillingSettings } from "@/components/settings/BillingSettings";
-
-type Organization = {
-  id: string;
-  name: string;
-  role: string;
-};
+import { useOrganization } from "@/components/providers/organization-provider";
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("general");
-  const [organizationId, setOrganizationId] = useState<string>("");
-  const [isLoading, setIsLoading] = useState(true);
+  const { organization } = useOrganization();
 
-  useEffect(() => {
-    async function fetchOrganization() {
-      try {
-        const response = await fetch("/api/organizations");
-        if (response.ok) {
-          const data = await response.json();
-          if (data.organizations && data.organizations.length > 0) {
-            setOrganizationId(data.organizations[0].id);
-          }
-        }
-      } catch (error) {
-        console.error("Failed to fetch organization:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    fetchOrganization();
-  }, []);
-
-  if (isLoading) {
-    return (
-      <div>
-        <PageHeader
-          heading="Settings"
-          text="Manage your organization settings and preferences"
-        />
-        <div className="mt-6 text-muted-foreground">Loading...</div>
-      </div>
-    );
-  }
-
-  if (!organizationId) {
+  if (!organization) {
     return (
       <div>
         <PageHeader
@@ -88,19 +51,19 @@ export default function SettingsPage() {
         </TabsList>
 
         <TabsContent value="general" className="mt-6" data-testid="content-general">
-          <GeneralSettings organizationId={organizationId} />
+          <GeneralSettings organizationId={organization.id} />
         </TabsContent>
 
         <TabsContent value="project-types" className="mt-6" data-testid="content-project-types">
-          <ProjectTypesSettings organizationId={organizationId} />
+          <ProjectTypesSettings organizationId={organization.id} />
         </TabsContent>
 
         <TabsContent value="team" className="mt-6" data-testid="content-team">
-          <TeamSettings organizationId={organizationId} />
+          <TeamSettings organizationId={organization.id} />
         </TabsContent>
 
         <TabsContent value="billing" className="mt-6" data-testid="content-billing">
-          <BillingSettings organizationId={organizationId} />
+          <BillingSettings organizationId={organization.id} />
         </TabsContent>
       </Tabs>
     </div>

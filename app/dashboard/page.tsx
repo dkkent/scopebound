@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { PageHeader } from "@/components/ui/page-header";
 import { Plus, FolderKanban } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useOrganization } from "@/components/providers/organization-provider";
 
 type Project = {
   id: string;
@@ -17,12 +18,6 @@ type Project = {
   projectType: string;
   status: string;
   createdAt: string;
-};
-
-type Organization = {
-  id: string;
-  name: string;
-  role: string;
 };
 
 const STATUS_VARIANTS: Record<string, "default" | "secondary" | "success" | "warning" | "destructive"> = {
@@ -45,52 +40,21 @@ const STATUS_LABELS: Record<string, string> = {
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { organization, organizations } = useOrganization();
   const [projects, setProjects] = useState<Project[]>([]);
-  const [organizations, setOrganizations] = useState<Organization[]>([]);
-  const [selectedOrg, setSelectedOrg] = useState<string>("");
+  const [selectedOrg, setSelectedOrg] = useState<string>(organization?.id || "");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [loading, setLoading] = useState(true);
-  const [orgError, setOrgError] = useState<string>("");
-  const [hasOrganizations, setHasOrganizations] = useState(false);
 
   useEffect(() => {
-    async function fetchOrganizations() {
-      try {
-        const response = await fetch("/api/organizations");
-        if (response.ok) {
-          const data = await response.json();
-          if (data.organizations && data.organizations.length > 0) {
-            setOrganizations(data.organizations);
-            setSelectedOrg(data.organizations[0].id);
-            setOrgError(""); // Clear any previous errors
-            setHasOrganizations(true);
-          } else {
-            setOrgError("No organizations found. Please create an organization first.");
-            setSelectedOrg(""); // Clear selected org
-            setLoading(false); // Stop loading immediately
-            setHasOrganizations(false);
-          }
-        } else {
-          setOrgError("Failed to load organizations. Please refresh the page.");
-          setSelectedOrg(""); // Clear selected org
-          setLoading(false); // Stop loading immediately
-          setHasOrganizations(false);
-        }
-      } catch (error) {
-        console.error("Failed to fetch organizations:", error);
-        setOrgError("Failed to load organizations. Please refresh the page.");
-        setSelectedOrg(""); // Clear selected org
-        setLoading(false); // Stop loading immediately
-        setHasOrganizations(false);
-      }
+    if (organization && !selectedOrg) {
+      setSelectedOrg(organization.id);
     }
-    fetchOrganizations();
-  }, []);
+  }, [organization, selectedOrg]);
 
   useEffect(() => {
     async function fetchProjects() {
-      // Only fetch projects if we have organizations and a valid selected org
-      if (!hasOrganizations || !selectedOrg) {
+      if (!selectedOrg) {
         setLoading(false);
         return;
       }
@@ -117,9 +81,27 @@ export default function DashboardPage() {
       }
     }
     fetchProjects();
-  }, [hasOrganizations, selectedOrg, statusFilter]);
+  }, [selectedOrg, statusFilter]);
 
   const filteredProjects = projects;
+
+  if (!organization) {
+    return (
+      <div className="max-w-7xl mx-auto space-y-6">
+        <PageHeader
+          heading="Projects"
+          text="Manage your client projects and track their progress"
+        />
+        <Card className="border-destructive/50" data-testid="org-error">
+          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+            <p className="text-destructive mb-4">
+              No organization found. Please create an organization first.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -154,26 +136,31 @@ export default function DashboardPage() {
             </SelectContent>
           </Select>
         </div>
+
+        {organizations.length > 1 && (
+          <div className="flex-1 max-w-xs">
+            <Select value={selectedOrg} onValueChange={setSelectedOrg}>
+              <SelectTrigger data-testid="select-organization">
+                <SelectValue placeholder="Select organization" />
+              </SelectTrigger>
+              <SelectContent>
+                {organizations.map((org) => (
+                  <SelectItem key={org.id} value={org.id} data-testid={`org-option-${org.id}`}>
+                    {org.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
 
-      {/* Organization Error */}
-      {orgError && (
-        <Card className="border-destructive/50" data-testid="org-error">
-          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <p className="text-destructive mb-4">{orgError}</p>
-            <Button variant="outline" onClick={() => window.location.reload()} data-testid="button-reload">
-              Reload Page
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Project Grid */}
-      {hasOrganizations && loading ? (
+      {loading ? (
         <div className="text-center py-12" data-testid="loading-state">
           <p className="text-muted-foreground">Loading projects...</p>
         </div>
-      ) : hasOrganizations && filteredProjects.length === 0 ? (
+      ) : filteredProjects.length === 0 ? (
         <Card className="border-dashed" data-testid="empty-state">
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <FolderKanban className="h-12 w-12 text-muted-foreground mb-4" />
@@ -189,7 +176,7 @@ export default function DashboardPage() {
             </Button>
           </CardContent>
         </Card>
-      ) : hasOrganizations ? (
+      ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3" data-testid="projects-grid">
           {filteredProjects.map((project) => (
             <Card
@@ -227,7 +214,7 @@ export default function DashboardPage() {
             </Card>
           ))}
         </div>
-      ) : null}
+      )}
     </div>
   );
 }

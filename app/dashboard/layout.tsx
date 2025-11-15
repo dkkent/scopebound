@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { UserMenu } from "@/components/dashboard/user-menu";
@@ -56,7 +57,11 @@ export default async function DashboardLayout({
       <div className="min-h-screen bg-background">
         <header className="border-b border-border">
           <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-            <h1 className="text-2xl font-semibold">Scopebound</h1>
+            <Link href="/dashboard" data-testid="link-logo">
+              <h1 className="text-2xl font-semibold cursor-pointer hover-elevate active-elevate-2 rounded-md px-2 py-1 -ml-2">
+                Scopebound
+              </h1>
+            </Link>
             <UserMenu userName={user.name} userEmail={user.email} />
           </div>
         </header>

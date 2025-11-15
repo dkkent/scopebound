@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { signIn, signUp } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -29,17 +30,29 @@ export function AuthForm({ mode }: AuthFormProps) {
     setLoading(true);
 
     try {
-      const endpoint = mode === "signup" ? "/api/auth/signup" : "/api/auth/login";
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
+      if (mode === "signup") {
+        // For signup, still use the API endpoint to handle organization creation
+        const response = await fetch("/api/auth/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        });
 
-      const data = await response.json();
+        const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.error || "Authentication failed");
+        if (!response.ok) {
+          throw new Error(data.error || "Signup failed");
+        }
+      } else {
+        // Use BetterAuth client for login to ensure cookies are set properly
+        const result = await signIn.email({
+          email: formData.email,
+          password: formData.password,
+        });
+
+        if (result.error) {
+          throw new Error(result.error.message || "Login failed");
+        }
       }
 
       router.push("/dashboard");

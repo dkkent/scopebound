@@ -104,8 +104,6 @@ export async function POST(
     // Sanitize the output to ensure data quality
     const sanitizedForm = sanitizeFormOutput(generatedForm);
 
-    console.log("📝 Sanitized form data:", JSON.stringify(sanitizedForm).substring(0, 200));
-
     // Check if a form already exists for this project
     const existingForm = await db
       .select()
@@ -113,12 +111,9 @@ export async function POST(
       .where(eq(projectForms.projectId, project.id))
       .limit(1);
 
-    console.log("📋 Existing forms found:", existingForm.length);
-
     let savedForm;
 
     if (existingForm.length > 0) {
-      console.log("🔄 Updating existing form:", existingForm[0].id);
       // Update existing form
       const updatedForm = await db
         .update(projectForms)
@@ -130,30 +125,21 @@ export async function POST(
         .returning();
 
       savedForm = updatedForm[0];
-      console.log("✅ Form updated successfully");
     } else {
-      console.log("➕ Creating new form for project:", project.id);
-      const formId = nanoid();
-      const token = nanoid(32);
-      console.log("   Form ID:", formId);
-      console.log("   Share token length:", token.length);
-      
       // Create new form
       const newForm = await db
         .insert(projectForms)
         .values({
-          id: formId,
+          id: nanoid(),
           projectId: project.id,
           formData: sanitizedForm,
-          shareToken: token,
+          shareToken: nanoid(32),
           clientEmail: null,
           submittedAt: null,
         })
         .returning();
 
-      console.log("✅ Form created, rows returned:", newForm.length);
       savedForm = newForm[0];
-      console.log("   Saved form ID:", savedForm?.id);
     }
 
     // Return only the form data, excluding sensitive fields like shareToken

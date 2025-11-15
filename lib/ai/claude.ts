@@ -4,7 +4,7 @@ import Anthropic from "@anthropic-ai/sdk";
 export const claude = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
   maxRetries: 3, // Retry on network errors and rate limits
-  timeout: 60000, // 60 seconds timeout
+  timeout: 300000, // 5 minutes timeout for long-running form generation
 });
 
 // Error types for better error handling

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { UserMenu } from "@/components/dashboard/user-menu";
 
 async function checkAuth() {
   const session = await auth.api.getSession({
@@ -28,9 +29,7 @@ export default async function DashboardLayout({
       <header className="border-b border-border">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <h1 className="text-2xl font-semibold">Scopebound</h1>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground">{user.name}</span>
-          </div>
+          <UserMenu userName={user.name} userEmail={user.email} />
         </div>
       </header>
       <main className="max-w-7xl mx-auto px-6 py-8">{children}</main>

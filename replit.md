@@ -74,18 +74,32 @@ Preferred communication style: Simple, everyday language.
 - WebSocket constructor configured for serverless compatibility
 
 **Schema Design**:
+
+**Authentication & User Management:**
 - `users` - User accounts with email (unique), name, emailVerified (boolean), timestamps
 - `session` - BetterAuth session management with token (unique), expiration, IP address, and device tracking
 - `account` - BetterAuth account table storing password hashes and OAuth tokens
 - `verification` - Email verification tokens (BetterAuth)
+
+**Multi-tenancy:**
 - `organizations` - Tenant entities with owner reference
 - `organization_members` - Many-to-many relationship with role enum (owner, member)
+- `organization_settings` - Per-organization configuration (default hourly rate, brand color, logo, custom AI prompts)
+
+**Project Management (November 15, 2025):**
+- `projects` - Core project records with client info, type (saas/mobile/web/ecommerce/custom), brief, hourly rate, status workflow
+- `project_forms` - Dynamic client intake forms (JSONB structure) with share tokens and submission tracking
+- `project_timelines` - AI-generated project timelines with phases, hours, costs, and public share capability
 
 **Important Schema Notes**:
 - All timestamp columns use `{ mode: "string" }` for BetterAuth compatibility (BetterAuth passes timestamps as strings, not Date objects)
 - `email_verified` is a boolean column (not timestamp) to match BetterAuth's expectations
 - `session.token` is a required unique text field for BetterAuth session management
 - Optional dependencies `bufferutil` and `utf-8-validate` installed for Neon WebSocket performance
+- Project IDs use nanoid() for unique, URL-safe identifiers
+- JSONB columns store flexible data structures for forms, timelines, and custom prompts
+- Share tokens (32 characters) enable public access to forms and timelines
+- Enums enforce valid project types and status transitions
 
 **Migrations**: Drizzle Kit for schema migrations
 - Schema defined in TypeScript with drizzle-orm
@@ -134,6 +148,9 @@ Preferred communication style: Simple, everyday language.
 
 ### Validation
 - **Zod 4.1.12** - Schema validation for API inputs and forms
+
+### Utilities
+- **nanoid** - Secure, URL-safe unique ID generation for projects, forms, and timelines
 
 ### Development
 - **TypeScript 5.9.3** - Type safety across application

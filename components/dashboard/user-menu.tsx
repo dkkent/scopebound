@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { LogOut, ChevronDown } from "lucide-react";
+import { LogOut, ChevronDown, Settings } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
@@ -63,6 +63,18 @@ export function UserMenu({ userName, userEmail }: UserMenuProps) {
             <p className="text-xs text-muted-foreground truncate" data-testid="text-user-email">{userEmail}</p>
           </div>
           <div className="p-2">
+            <Button
+              variant="ghost"
+              className="w-full justify-start"
+              onClick={() => {
+                setIsOpen(false);
+                router.push("/dashboard/settings");
+              }}
+              data-testid="button-settings"
+            >
+              <Settings className="h-4 w-4 mr-2" />
+              Settings
+            </Button>
             <Button
               variant="ghost"
               className="w-full justify-start"

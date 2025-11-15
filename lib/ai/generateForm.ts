@@ -36,7 +36,7 @@ export async function generateForm(
     const response = await callClaudeWithRateLimit(async () => {
       return await claude.messages.create({
         model: DEFAULT_MODEL,
-        max_tokens: 4096,
+        max_tokens: 8000, // Increased to allow for comprehensive forms
         temperature: 0.7, // Balanced creativity and consistency
         messages: [
           {
@@ -60,10 +60,23 @@ export async function generateForm(
     try {
       // Try to extract JSON from markdown code blocks if present
       const jsonMatch = responseText.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
-      const jsonText = jsonMatch ? jsonMatch[1] : responseText;
+      let jsonText = jsonMatch ? jsonMatch[1] : responseText;
+      
+      // Decode HTML entities that Claude sometimes returns
+      jsonText = jsonText
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'");
+      
       jsonResponse = JSON.parse(jsonText.trim());
     } catch (parseError) {
-      console.error("Failed to parse Claude response as JSON:", responseText);
+      console.error("Failed to parse Claude response as JSON:");
+      console.error("Response length:", responseText.length);
+      console.error("First 1000 chars:", responseText.substring(0, 1000));
+      console.error("Last 500 chars:", responseText.substring(responseText.length - 500));
+      console.error("Parse error:", parseError);
       throw new ClaudeError(
         "Claude response was not valid JSON. Please try again."
       );

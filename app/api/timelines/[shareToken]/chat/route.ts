@@ -10,7 +10,7 @@ import {
 import { eq, desc } from 'drizzle-orm';
 import { z } from 'zod';
 import Anthropic from '@anthropic-ai/sdk';
-import { applyRateLimit } from '@/lib/rate-limit';
+import { aiRateLimiter } from '@/lib/rate-limit';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -42,10 +42,9 @@ export async function POST(
       );
     }
 
-    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
-    const rateLimitResult = applyRateLimit(ip, 'ai', { maxRequests: 10, windowMs: 60000 });
+    const rateLimitResult = await aiRateLimiter.check(request);
     
-    if (!rateLimitResult.allowed) {
+    if (!rateLimitResult.success) {
       return NextResponse.json(
         { error: 'Rate limit exceeded. Please try again later.' },
         { status: 429 }

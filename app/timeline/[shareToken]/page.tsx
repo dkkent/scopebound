@@ -132,5 +132,5 @@ export default async function TimelinePage({ params }: TimelinePageProps) {
     risks: Array.isArray(timelineData.risks) ? timelineData.risks : [],
   };
 
-  return <TimelinePageClient timeline={normalizedTimeline} project={project} />;
+  return <TimelinePageClient timeline={normalizedTimeline} project={project} shareToken={shareToken} />;
 }

@@ -1,9 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, X } from "lucide-react";
 import { TimelineView } from "./TimelineView";
 import { TimelineStats } from "./TimelineStats";
+import { TimelineChatSidebar } from "./TimelineChatSidebar";
+import { TimelineProposalComparison } from "./TimelineProposalComparison";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
 
 interface TimelineData {
   phases: Array<{
@@ -28,9 +36,65 @@ interface TimelinePageClientProps {
     projectType: string;
     projectBrief: string;
   };
+  shareToken: string;
 }
 
-export function TimelinePageClient({ timeline, project }: TimelinePageClientProps) {
+export function TimelinePageClient({ timeline, project, shareToken }: TimelinePageClientProps) {
+  const [chatOpen, setChatOpen] = useState(false);
+  const [selectedProposalId, setSelectedProposalId] = useState<string | null>(null);
+  const [comparisonOpen, setComparisonOpen] = useState(false);
+  const [clientEmail, setClientEmail] = useState<string>('');
+  const { toast } = useToast();
+
+  const handleProposalSelect = (proposalId: string) => {
+    setSelectedProposalId(proposalId);
+    setComparisonOpen(true);
+  };
+
+  const handleRequestChangeOrder = async (proposalId: string, email?: string) => {
+    const emailToUse = email || clientEmail;
+    if (!emailToUse) {
+      toast({
+        title: 'Email required',
+        description: 'Please provide your email address to submit a change order request.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/change-orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          proposalId,
+          clientEmail: emailToUse,
+          shareToken,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create change order');
+      }
+
+      const data = await response.json();
+      setComparisonOpen(false);
+      
+      toast({
+        title: 'Request submitted',
+        description: 'Your change order request has been sent to the team. You\'ll receive a response shortly.',
+      });
+      
+    } catch (error) {
+      console.error('Failed to create change order:', error);
+      toast({
+        title: 'Request failed',
+        description: error instanceof Error ? error.message : 'Failed to submit change order request. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
   return (
     <div className="min-h-screen bg-background">
       <style jsx global>{`
@@ -55,7 +119,12 @@ export function TimelinePageClient({ timeline, project }: TimelinePageClientProp
                 Project Timeline for {project.clientName}
               </p>
             </div>
-            <Button variant="outline" className="no-print" data-testid="button-questions">
+            <Button 
+              variant="outline" 
+              className="no-print" 
+              onClick={() => setChatOpen(true)}
+              data-testid="button-questions"
+            >
               <MessageCircle className="w-4 h-4 mr-2" />
               Questions?
             </Button>
@@ -130,6 +199,56 @@ export function TimelinePageClient({ timeline, project }: TimelinePageClientProp
           </p>
         </footer>
       </main>
+
+      <div
+        className={`fixed top-0 right-0 h-screen w-96 bg-background border-l shadow-lg transition-transform duration-300 z-50 no-print ${
+          chatOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
+        data-testid="sidebar-chat"
+      >
+        <div className="flex items-center justify-between p-4 border-b">
+          <h2 className="font-semibold">Chat</h2>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setChatOpen(false)}
+            data-testid="button-close-chat"
+          >
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
+        <TimelineChatSidebar 
+          shareToken={shareToken} 
+          onProposalSelect={handleProposalSelect}
+          onEmailUpdate={setClientEmail}
+        />
+      </div>
+
+      {chatOpen && (
+        <div
+          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 no-print"
+          onClick={() => setChatOpen(false)}
+          data-testid="overlay-chat"
+        />
+      )}
+
+      <Dialog open={comparisonOpen} onOpenChange={setComparisonOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] p-0">
+          {selectedProposalId && (
+            <TimelineProposalComparison
+              proposalId={selectedProposalId}
+              shareToken={shareToken}
+              currentTimeline={{
+                total_cost: timeline.total_cost,
+                total_weeks: timeline.total_weeks,
+              }}
+              onClose={() => setComparisonOpen(false)}
+              onRequestChangeOrder={handleRequestChangeOrder}
+              clientEmail={clientEmail}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

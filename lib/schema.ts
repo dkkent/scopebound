@@ -15,6 +15,9 @@ export const projectStatusEnum = pgEnum("project_status", [
   "in_progress",
   "completed",
 ]);
+export const chatMessageRoleEnum = pgEnum("chat_message_role", ["user", "assistant", "system"]);
+export const proposalStatusEnum = pgEnum("proposal_status", ["draft", "active", "superseded", "approved", "rejected"]);
+export const changeOrderStatusEnum = pgEnum("change_order_status", ["draft", "pending_approval", "approved", "rejected"]);
 
 // Users table
 export const users = pgTable("users", {
@@ -418,6 +421,106 @@ export const insertOrganizationInviteSchema = createInsertSchema(organizationInv
   createdAt: true,
 });
 
+// Timeline Chat Sessions table
+export const timelineChatSessions = pgTable("timeline_chat_sessions", {
+  id: text("id").primaryKey().$defaultFn(() => nanoid()),
+  shareToken: text("share_token").notNull().unique(),
+  projectId: text("project_id")
+    .notNull()
+    .references(() => projects.id, { onDelete: "cascade" }),
+  timelineId: text("timeline_id")
+    .notNull()
+    .unique()
+    .references(() => projectTimelines.id, { onDelete: "cascade" }),
+  clientEmail: text("client_email"),
+  createdAt: timestamp("created_at", { mode: "string" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "string" }).notNull().defaultNow(),
+}, (table) => ({
+  shareTokenIdx: index("chat_sessions_share_token_idx").on(table.shareToken),
+  timelineIdx: index("chat_sessions_timeline_idx").on(table.timelineId),
+}));
+
+// Timeline Chat Messages table
+export const timelineChatMessages = pgTable("timeline_chat_messages", {
+  id: text("id").primaryKey().$defaultFn(() => nanoid()),
+  sessionId: text("session_id")
+    .notNull()
+    .references(() => timelineChatSessions.id, { onDelete: "cascade" }),
+  role: chatMessageRoleEnum("role").notNull(),
+  content: text("content").notNull(),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at", { mode: "string" }).notNull().defaultNow(),
+}, (table) => ({
+  sessionIdx: index("chat_messages_session_idx").on(table.sessionId),
+}));
+
+// Timeline Proposals table
+export const timelineProposals = pgTable("timeline_proposals", {
+  id: text("id").primaryKey().$defaultFn(() => nanoid()),
+  sessionId: text("session_id")
+    .notNull()
+    .references(() => timelineChatSessions.id, { onDelete: "cascade" }),
+  baseTimelineId: text("base_timeline_id")
+    .notNull()
+    .references(() => projectTimelines.id, { onDelete: "cascade" }),
+  proposalData: jsonb("proposal_data").notNull(),
+  deltaCost: numeric("delta_cost", { precision: 10, scale: 2 }).notNull(),
+  deltaWeeks: numeric("delta_weeks", { precision: 10, scale: 2 }).notNull(),
+  status: proposalStatusEnum("status").notNull().default("draft"),
+  summary: text("summary"),
+  createdAt: timestamp("created_at", { mode: "string" }).notNull().defaultNow(),
+}, (table) => ({
+  sessionIdx: index("proposals_session_idx").on(table.sessionId),
+  baseTimelineIdx: index("proposals_base_timeline_idx").on(table.baseTimelineId),
+  statusIdx: index("proposals_status_idx").on(table.status),
+}));
+
+// Project Change Orders table
+export const projectChangeOrders = pgTable("project_change_orders", {
+  id: text("id").primaryKey().$defaultFn(() => nanoid()),
+  projectId: text("project_id")
+    .notNull()
+    .references(() => projects.id, { onDelete: "cascade" }),
+  proposalId: text("proposal_id")
+    .notNull()
+    .references(() => timelineProposals.id, { onDelete: "cascade" }),
+  requestedBy: text("requested_by").references(() => users.id),
+  clientEmail: text("client_email"),
+  clientNotes: text("client_notes"),
+  status: changeOrderStatusEnum("status").notNull().default("draft"),
+  approvedBy: text("approved_by").references(() => users.id),
+  approvedAt: timestamp("approved_at", { mode: "string" }),
+  createdAt: timestamp("created_at", { mode: "string" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "string" }).notNull().defaultNow(),
+}, (table) => ({
+  projectIdx: index("change_orders_project_idx").on(table.projectId),
+  proposalIdx: index("change_orders_proposal_idx").on(table.proposalId),
+  statusIdx: index("change_orders_status_idx").on(table.status),
+}));
+
+// Insert schemas
+export const insertTimelineChatSessionSchema = createInsertSchema(timelineChatSessions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertTimelineChatMessageSchema = createInsertSchema(timelineChatMessages).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertTimelineProposalSchema = createInsertSchema(timelineProposals).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertProjectChangeOrderSchema = createInsertSchema(projectChangeOrders).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -439,3 +542,11 @@ export type CustomProjectType = typeof customProjectTypes.$inferSelect;
 export type InsertCustomProjectType = z.infer<typeof insertCustomProjectTypeSchema>;
 export type OrganizationInvite = typeof organizationInvites.$inferSelect;
 export type InsertOrganizationInvite = z.infer<typeof insertOrganizationInviteSchema>;
+export type TimelineChatSession = typeof timelineChatSessions.$inferSelect;
+export type InsertTimelineChatSession = z.infer<typeof insertTimelineChatSessionSchema>;
+export type TimelineChatMessage = typeof timelineChatMessages.$inferSelect;
+export type InsertTimelineChatMessage = z.infer<typeof insertTimelineChatMessageSchema>;
+export type TimelineProposal = typeof timelineProposals.$inferSelect;
+export type InsertTimelineProposal = z.infer<typeof insertTimelineProposalSchema>;
+export type ProjectChangeOrder = typeof projectChangeOrders.$inferSelect;
+export type InsertProjectChangeOrder = z.infer<typeof insertProjectChangeOrderSchema>;

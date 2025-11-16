@@ -1,7 +1,7 @@
 # Scopebound - Multi-tenant SaaS Platform
 
 ## Overview
-Scopebound is a modern multi-tenant SaaS application built with Next.js 14, providing a foundation for building SaaS products with team collaboration features. It features secure authentication, organization management, and a clean, productivity-focused design system inspired by Linear and Notion. The platform includes AI-powered client intake form generation using Claude AI and a comprehensive project management system with organization-based access control.
+Scopebound is a modern multi-tenant SaaS application built with Next.js 14, providing a foundation for building SaaS products with team collaboration features. It features secure authentication, organization management, and a clean, productivity-focused design system inspired by Linear and Notion. The platform includes AI-powered client intake form generation, AI-powered timeline generation, and an AI-powered scope exploration chat feature that enables clients to discuss scope changes and request change orders directly on shared timeline pages.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -49,11 +49,13 @@ Preferred communication style: Simple, everyday language.
     - **Authentication & User Management**: `users`, `session`, `account`, `verification`.
     - **Multi-tenancy**: `organizations`, `organization_members`, `organization_settings`, `custom_project_types`, `organization_invites`.
     - **Project Management**: `projects` (core project records), `project_forms` (dynamic client intake forms in JSONB), `project_timelines` (AI-generated timelines in JSONB).
+    - **AI Chat & Change Orders**: `timeline_chat_sessions`, `timeline_chat_messages`, `timeline_proposals`, `project_change_orders`.
 - **Key Features**: All timestamp columns use `{ mode: "string" }` for BetterAuth compatibility. Project IDs use `nanoid`. JSONB columns store flexible data structures. Share tokens enable public access to forms and timelines. Enums enforce valid project types and status transitions.
 - **Migrations**: Drizzle Kit for schema migrations.
 - **Performance Optimization**: 14 database indexes on foreign keys and composite query patterns for optimal query performance:
     - Foreign key indexes: `organization_members(user_id, organization_id)`, `organization_settings(organization_id)`, `custom_project_types(organization_id)`, `organization_invites(organization_id, email)`, `projects(organization_id, status, created_at)`, `project_forms(project_id)`, `project_timelines(project_id)`
     - Composite indexes: `projects(organization_id, status)`, `projects(organization_id, created_at DESC)`, `organization_members(user_id, organization_id)`
+    - Chat-related indexes: `timeline_chat_sessions(shareToken)`, `timeline_chat_sessions(timelineId)`, `timeline_chat_messages(sessionId)`, `timeline_proposals(sessionId)`, `project_change_orders(proposalId)`
 
 ### Authentication & Authorization
 - **Library**: BetterAuth v1.3.34 for email/password authentication, Drizzle adapter for persistence, and secure session management.
@@ -71,6 +73,27 @@ Preferred communication style: Simple, everyday language.
   - **Team**: Member list, role management, invitation system with email notifications.
   - **Billing**: Usage statistics (projects created, forms sent, timelines generated) and Stripe integration placeholder.
 - **Email Integration**: Resend for transactional emails (invitation emails with HTML/plain-text templates).
+
+### AI-Powered Scope Chat Feature
+- **Timeline Chat Sidebar** (`components/timeline/TimelineChatSidebar.tsx`): Interactive AI chat on public timeline pages enabling clients to explore scope changes.
+- **Chat Flow**:
+  1. Client provides email to unlock chat access
+  2. Conversation with Claude AI about project scope
+  3. AI automatically detects scope changes and creates proposals
+  4. Proposals include delta metrics (cost impact, timeline impact)
+  5. Client reviews side-by-side comparison of current vs proposed scope
+  6. Client can request change orders directly from the timeline
+  7. Change order notifications sent to all organization owners
+- **Components**:
+  - `TimelineChatSidebar.tsx`: Main chat interface with email gate, message history, and proposal cards
+  - `TimelineProposalComparison.tsx`: Side-by-side timeline comparison with delta metrics
+  - `TimelinePageClient.tsx`: Client-side integration with slide-out sidebar and dialog modals
+- **API Endpoints**:
+  - `POST /api/timelines/[shareToken]/chat`: Processes chat messages with Claude, creates proposals when scope changes detected
+  - `GET /api/timelines/[shareToken]/chat`: Retrieves conversation history, proposals, and session data
+  - `POST /api/change-orders`: Creates change orders from proposals and notifies organization owners
+- **Security**: ShareToken-based access control, rate limiting (10 req/min per IP), API key validation
+- **Email Persistence**: Client email stored in session and repopulated on page reload for seamless multi-session conversations
 
 ### API Routes Structure
 - **Organization Context**: All organization-scoped routes accept `organizationId` as a query parameter.

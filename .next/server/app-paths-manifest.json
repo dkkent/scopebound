@@ -1,4 +1,4 @@
 {
-  "/page": "app/page.js",
-  "/timeline/[shareToken]/page": "app/timeline/[shareToken]/page.js"
+  "/timeline/[shareToken]/page": "app/timeline/[shareToken]/page.js",
+  "/page": "app/page.js"
 }

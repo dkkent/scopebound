@@ -60,6 +60,7 @@ export function TimelineView({ timeline }: TimelineViewProps) {
     const startWeek = currentWeek;
     const widthPercentage = (phase.duration_weeks / timeline.total_weeks) * 100;
     const leftPercentage = (currentWeek / timeline.total_weeks) * 100;
+    const phaseBudget = (phase.duration_weeks / timeline.total_weeks) * timeline.total_cost;
     currentWeek += phase.duration_weeks;
 
     return {
@@ -68,9 +69,29 @@ export function TimelineView({ timeline }: TimelineViewProps) {
       endWeek: currentWeek,
       widthPercentage,
       leftPercentage,
+      phaseBudget,
       color: PHASE_COLORS[index % PHASE_COLORS.length],
     };
   });
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  const formatDuration = (weeks: number) => {
+    const wholeWeeks = Math.floor(weeks);
+    const remainingDays = Math.round((weeks - wholeWeeks) * 5);
+    
+    if (remainingDays === 0) {
+      return `${wholeWeeks} week${wholeWeeks !== 1 ? 's' : ''}`;
+    }
+    return `${wholeWeeks}w ${remainingDays}d`;
+  };
 
   return (
     <div className="space-y-6">
@@ -89,7 +110,7 @@ export function TimelineView({ timeline }: TimelineViewProps) {
           </div>
 
           <div className="relative h-12 bg-muted/30 rounded-md overflow-hidden">
-            {phasePositions.map(({ phase, widthPercentage, leftPercentage, color }) => (
+            {phasePositions.map(({ phase, widthPercentage, leftPercentage, phaseBudget, color }) => (
               <div
                 key={phase.id}
                 className={`absolute h-full ${color} hover-elevate cursor-pointer transition-all duration-200`}
@@ -103,13 +124,24 @@ export function TimelineView({ timeline }: TimelineViewProps) {
                 data-testid={`timeline-bar-${phase.id}`}
               >
                 {hoveredPhase === phase.id && (
-                  <div className="absolute top-full left-0 mt-2 z-10 min-w-48 p-3 bg-popover text-popover-foreground rounded-md shadow-lg border text-sm">
-                    <div className="font-medium mb-1">{phase.name}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {phase.duration_weeks} week{phase.duration_weeks !== 1 ? 's' : ''}
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-10 bg-popover text-popover-foreground rounded-lg shadow-xl border-2 overflow-hidden min-w-64">
+                    <div className={`${color} px-4 py-2`}>
+                      <div className="font-semibold text-white text-sm">{phase.name}</div>
                     </div>
-                    <div className="text-xs text-muted-foreground">
-                      {phase.tasks.length} task{phase.tasks.length !== 1 ? 's' : ''}
+                    <div className="px-4 py-3 space-y-2">
+                      <div className="flex items-center justify-between gap-4">
+                        <span className="text-xs text-muted-foreground">Duration</span>
+                        <span className="text-sm font-medium">{formatDuration(phase.duration_weeks)}</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-4">
+                        <span className="text-xs text-muted-foreground">Budget</span>
+                        <span className="text-sm font-medium">{formatCurrency(phaseBudget)}</span>
+                      </div>
+                      <div className="pt-1 border-t">
+                        <div className="text-xs text-muted-foreground text-center">
+                          {phase.tasks.length} task{phase.tasks.length !== 1 ? 's' : ''}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}

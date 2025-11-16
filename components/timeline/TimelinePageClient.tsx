@@ -201,7 +201,7 @@ export function TimelinePageClient({ timeline, project, shareToken }: TimelinePa
       </main>
 
       <div
-        className={`fixed top-0 right-0 h-screen w-96 bg-background border-l shadow-lg transition-transform duration-300 z-50 no-print ${
+        className={`fixed top-0 right-0 h-screen w-96 bg-background border-l shadow-lg transition-transform duration-300 z-50 no-print flex flex-col ${
           chatOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
         data-testid="sidebar-chat"
@@ -217,11 +217,13 @@ export function TimelinePageClient({ timeline, project, shareToken }: TimelinePa
             <X className="w-4 h-4" />
           </Button>
         </div>
-        <TimelineChatSidebar 
-          shareToken={shareToken} 
-          onProposalSelect={handleProposalSelect}
-          onEmailUpdate={setClientEmail}
-        />
+        <div className="flex-1 overflow-hidden">
+          <TimelineChatSidebar 
+            shareToken={shareToken} 
+            onProposalSelect={handleProposalSelect}
+            onEmailUpdate={setClientEmail}
+          />
+        </div>
       </div>
 
       {chatOpen && (

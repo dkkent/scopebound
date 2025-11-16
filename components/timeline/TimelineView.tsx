@@ -96,7 +96,7 @@ export function TimelineView({ timeline }: TimelineViewProps) {
   return (
     <div className="space-y-6">
       <div className="space-y-4">
-        <div className="relative">
+        <div className="relative pb-32">
           <div className="flex justify-between text-xs text-muted-foreground mb-2 px-1">
             {weekMarkers.map(week => (
               <div
@@ -109,7 +109,7 @@ export function TimelineView({ timeline }: TimelineViewProps) {
             ))}
           </div>
 
-          <div className="relative h-12 bg-muted/30 rounded-md overflow-hidden">
+          <div className="relative h-12 bg-muted/30 rounded-md overflow-visible">
             {phasePositions.map(({ phase, widthPercentage, leftPercentage, phaseBudget, color }) => (
               <div
                 key={phase.id}

@@ -1175,6 +1175,9 @@ h3 {
 .overflow-hidden {
   overflow: hidden;
 }
+.overflow-visible {
+  overflow: visible;
+}
 .truncate {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1449,6 +1452,9 @@ h3 {
 }
 .pt-1 {
   padding-top: 0.25rem;
+}
+.pb-32 {
+  padding-bottom: 8rem;
 }
 .text-left {
   text-align: left;

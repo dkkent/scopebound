@@ -81,6 +81,46 @@ export function TimelinePageClient({ timeline, project }: TimelinePageClientProp
           <TimelineView timeline={timeline} />
         </section>
 
+        {timeline.assumptions.length > 0 && (
+          <section className="print-break-inside-avoid" data-testid="section-assumptions">
+            <h2 className="text-xl font-semibold mb-4">Key Assumptions</h2>
+            <div className="bg-muted/30 rounded-lg p-6">
+              <ul className="space-y-2">
+                {timeline.assumptions.map((assumption, index) => (
+                  <li
+                    key={index}
+                    className="text-sm text-muted-foreground flex items-start gap-2"
+                    data-testid={`assumption-${index}`}
+                  >
+                    <span className="text-muted-foreground/50 mt-0.5">•</span>
+                    <span>{assumption}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </section>
+        )}
+
+        {timeline.risks.length > 0 && (
+          <section className="print-break-inside-avoid" data-testid="section-risks">
+            <h2 className="text-xl font-semibold mb-4">Important Risks</h2>
+            <div className="bg-muted/30 rounded-lg p-6">
+              <ul className="space-y-2">
+                {timeline.risks.map((risk, index) => (
+                  <li
+                    key={index}
+                    className="text-sm text-muted-foreground flex items-start gap-2"
+                    data-testid={`risk-${index}`}
+                  >
+                    <span className="text-muted-foreground/50 mt-0.5">•</span>
+                    <span>{risk}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </section>
+        )}
+
         <footer className="mt-12 pt-8 border-t text-center text-sm text-muted-foreground no-print">
           <p>
             This timeline is subject to change based on project requirements and client feedback.

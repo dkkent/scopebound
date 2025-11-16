@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, DollarSign, Layers, AlertTriangle, Info } from "lucide-react";
+import { Calendar, DollarSign, Layers, AlertTriangle } from "lucide-react";
 
 interface TimelineData {
   phases: Array<{
@@ -105,56 +105,6 @@ export function TimelineStats({ timeline }: TimelineStatsProps) {
           </CardContent>
         </Card>
       </div>
-
-      {timeline.assumptions.length > 0 && (
-        <Card data-testid="card-assumptions">
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Info className="h-4 w-4" />
-              Key Assumptions
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2">
-              {timeline.assumptions.map((assumption, index) => (
-                <li
-                  key={index}
-                  className="text-sm text-muted-foreground flex items-start gap-2"
-                  data-testid={`assumption-${index}`}
-                >
-                  <span className="text-muted-foreground/50 mt-0.5">•</span>
-                  <span>{assumption}</span>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-      )}
-
-      {timeline.risks.length > 0 && (
-        <Card data-testid="card-risks">
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4" />
-              Important Risks
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2">
-              {timeline.risks.map((risk, index) => (
-                <li
-                  key={index}
-                  className="text-sm text-muted-foreground flex items-start gap-2"
-                  data-testid={`risk-${index}`}
-                >
-                  <span className="text-muted-foreground/50 mt-0.5">•</span>
-                  <span>{risk}</span>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }
